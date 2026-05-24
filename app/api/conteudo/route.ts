@@ -2,11 +2,12 @@ import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
 
-const SYSTEM_PROMPT = `Você é um professor experiente e apaixonado pela sua matéria, especialista em preparação para o ENEM.
-Sua missão é ENSINAR de verdade: explique conceitos como se estivesse na lousa, use analogias, dê exemplos do cotidiano, antecipe as dúvidas do aluno e as responda.
-O aluno deve sair da sua aula entendendo o assunto, não apenas sabendo que ele existe.
-Use linguagem direta, clara e envolvente.
-Retorne APENAS o objeto JSON solicitado, sem explicações extras ou blocos de markdown.`
+const SYSTEM_PROMPT = `Você é um professor lendário, especialista absoluto em preparação para o ENEM.
+Sua voz é empática, entusiasmada e extremamente didática.
+Você não apenas entrega informação; você constrói conhecimento.
+Use analogias brilhantes, conecte o tema com a realidade do aluno e antecipe aquelas dúvidas que todo mundo tem.
+Sua aula deve ser fluida, como se você estivesse conversando diretamente com o estudante, incentivando-o a cada parágrafo.
+Retorne APENAS o JSON solicitado, mas com conteúdo rico e extenso dentro das strings.`
 
 const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent'
 
@@ -18,26 +19,37 @@ export async function GET(req: NextRequest) {
   if (!apiKey) return Response.json({ error: 'GEMINI_API_KEY não configurada' }, { status: 503 })
   if (!topic) return Response.json({ error: 'topic obrigatório' }, { status: 400 })
 
-  const prompt = `Prepare uma aula completa sobre "${topic}"${subject ? ` (matéria: ${subject})` : ''} para um aluno que vai fazer o ENEM.
+  const prompt = `Professor, prepare uma aula magistral sobre "${topic}"${subject ? ` da matéria de ${subject}` : ''}.
 
-Retorne exatamente este formato JSON:
+A aula deve seguir rigorosamente este formato JSON, mas o conteúdo deve ser profundo:
+
 {
-  "title": "nome do tópico formatado",
-  "intro": "Abertura da aula em 2-3 frases.",
-  "keyPoints": ["Ponto 1", "Ponto 2", "Ponto 3", "Ponto 4", "Ponto 5"],
+  "title": "Um título criativo e chamativo para a aula",
+  "intro": "Uma introdução envolvente (3-4 frases) que mostre por que este tema é fascinante e essencial para o ENEM.",
+  "keyPoints": [
+    "Conceito fundamental 1 explicado de forma clara",
+    "Conceito fundamental 2",
+    "Conceito fundamental 3",
+    "Conceito fundamental 4",
+    "Conceito fundamental 5"
+  ],
   "sections": [
     {
-      "title": "Título da parte 1",
-      "content": "Explicação aprofundada (mínimo 200 palavras)."
+      "title": "Mergulhando no Conceito: [Subtítulo Criativo]",
+      "content": "Aqui você deve dar um show de didática. Explique a base do tema, use uma analogia poderosa do dia a dia. Não economize nas palavras (mínimo 250 palavras). Divida bem as ideias em parágrafos usando '\\n\\n'."
     },
     {
-      "title": "Título da parte 2",
-      "content": "Continuação da aula com exemplos práticos (mínimo 150 palavras)."
+      "title": "Aplicações e Desafios: [Subtítulo Criativo]",
+      "content": "Como isso se manifesta no mundo real? Quais são os desdobramentos? Explique processos passo a passo. Seja o mentor que o aluno precisa para entender a complexidade do tema de forma simples (mínimo 200 palavras). Use '\\n\\n' para separar parágrafos."
     }
   ],
-  "enemContext": "Explicação de como o ENEM cobra este tema.",
-  "studyTips": ["Dica 1", "Dica 2", "Dica 3"],
-  "example": "Exemplo real de aplicação no ENEM."
+  "enemContext": "Análise cirúrgica: Como o ENEM cobra isso? Quais são as 'pegadinhas' clássicas? O que o aluno deve priorizar na hora da prova?",
+  "studyTips": [
+    "Dica de ouro para nunca mais esquecer",
+    "Sugestão de como revisar este tema",
+    "Conexão interdisciplinar"
+  ],
+  "example": "Descreva uma situação-problema típica do ENEM sobre este tema. Explique o raciocínio lógico necessário para chegar à resposta correta."
 }`
 
   try {
@@ -48,8 +60,8 @@ Retorne exatamente este formato JSON:
         system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 4096,
+          temperature: 0.8,
+          maxOutputTokens: 8192,
           response_mime_type: 'application/json',
         },
       }),
