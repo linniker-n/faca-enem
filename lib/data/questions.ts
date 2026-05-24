@@ -1,0 +1,341 @@
+import type { Question } from '../types'
+
+export const QUESTIONS: Question[] = [
+  // MATEMÁTICA
+  {
+    id: 'q1',
+    subjectId: 'matematica',
+    topicId: 'porcentagem',
+    difficulty: 'easy',
+    year: 2023,
+    text: 'Um produto foi reajustado em 20% e depois sofreu desconto de 20%. Em relação ao preço original, o preço final é:',
+    options: ['4% menor', '4% maior', 'Igual ao original', '8% menor'],
+    correctIndex: 0,
+    explanation: 'Se o preço original é P, após o aumento: P × 1,20 = 1,2P. Após o desconto: 1,2P × 0,80 = 0,96P. A diferença é 4% a menos que o original.',
+  },
+  {
+    id: 'q2',
+    subjectId: 'matematica',
+    topicId: 'funcoes',
+    difficulty: 'medium',
+    year: 2022,
+    text: 'Uma função do 2º grau f(x) = x² – 4x + 3 tem como raízes os valores:',
+    options: ['x = 1 e x = 3', 'x = -1 e x = -3', 'x = 2 e x = 2', 'x = 0 e x = 4'],
+    correctIndex: 0,
+    explanation: 'Usando Bhaskara ou fatoração: x² – 4x + 3 = (x – 1)(x – 3) = 0. Logo x = 1 ou x = 3.',
+  },
+  {
+    id: 'q3',
+    subjectId: 'matematica',
+    topicId: 'estatistica',
+    difficulty: 'easy',
+    year: 2021,
+    text: 'Em uma turma de 10 alunos, as notas foram: 5, 6, 7, 7, 8, 8, 8, 9, 9, 10. A moda e a mediana são, respectivamente:',
+    options: ['8 e 8', '7 e 8', '8 e 7,5', '9 e 8'],
+    correctIndex: 0,
+    explanation: 'A moda é o valor mais frequente: 8 (aparece 3 vezes). A mediana é a média dos 5º e 6º termos ordenados: (8+8)/2 = 8.',
+  },
+  {
+    id: 'q4',
+    subjectId: 'matematica',
+    topicId: 'geometria-plana',
+    difficulty: 'medium',
+    year: 2022,
+    text: 'Um terreno retangular tem perímetro de 60 m e comprimento o dobro da largura. Qual é a área do terreno?',
+    options: ['200 m²', '100 m²', '400 m²', '150 m²'],
+    correctIndex: 0,
+    explanation: 'Seja largura = l e comprimento = 2l. Perímetro: 2(l + 2l) = 6l = 60, logo l = 10. Comprimento = 20. Área = 10 × 20 = 200 m².',
+  },
+  {
+    id: 'q5',
+    subjectId: 'matematica',
+    topicId: 'razao-proporcao',
+    difficulty: 'easy',
+    year: 2021,
+    text: 'Se 4 torneiras enchem um tanque em 3 horas, quantas torneiras seriam necessárias para enchê-lo em 2 horas?',
+    options: ['6', '8', '5', '12'],
+    correctIndex: 0,
+    explanation: 'É uma grandeza inversamente proporcional: 4 × 3 = n × 2. Logo n = 6 torneiras.',
+  },
+
+  // BIOLOGIA
+  {
+    id: 'q6',
+    subjectId: 'biologia',
+    topicId: 'ecologia',
+    difficulty: 'medium',
+    year: 2023,
+    text: 'Em uma cadeia alimentar: Planta → Gafanhoto → Sapo → Cobra → Gavião. Se houver eliminação dos sapos por uma doença, a consequência mais provável seria:',
+    options: [
+      'Aumento de gafanhotos e diminuição de cobras',
+      'Diminuição de gafanhotos e aumento de cobras',
+      'Aumento de gavião e diminuição de plantas',
+      'Nenhuma alteração significativa',
+    ],
+    correctIndex: 0,
+    explanation: 'Sem sapos (predadores dos gafanhotos), a população de gafanhotos aumenta. Sem sapos (presas das cobras), a população de cobras diminui por escassez de alimento.',
+  },
+  {
+    id: 'q7',
+    subjectId: 'biologia',
+    topicId: 'citologia',
+    difficulty: 'medium',
+    year: 2022,
+    text: 'A mitocôndria é considerada a "usina de energia" da célula porque:',
+    options: [
+      'Realiza respiração celular, produzindo ATP',
+      'Sintetiza proteínas para uso energético',
+      'Armazena glicose para uso futuro',
+      'Realiza fotossíntese em células animais',
+    ],
+    correctIndex: 0,
+    explanation: 'A mitocôndria realiza a respiração aeróbica, processo que converte glicose e oxigênio em CO₂, H₂O e grande quantidade de ATP (energia celular).',
+  },
+  {
+    id: 'q8',
+    subjectId: 'biologia',
+    topicId: 'genetica',
+    difficulty: 'hard',
+    year: 2021,
+    text: 'Em uma espécie com 2n = 46 cromossomos, quantos cromossomos haverá em um gameta?',
+    options: ['23', '46', '92', '24'],
+    correctIndex: 0,
+    explanation: 'Os gametas são células haploides (n), resultantes da meiose. Se 2n = 46, então n = 23 cromossomos nos gametas.',
+  },
+
+  // FÍSICA
+  {
+    id: 'q9',
+    subjectId: 'fisica',
+    topicId: 'mecanica',
+    difficulty: 'medium',
+    year: 2023,
+    text: 'Um objeto de 2 kg é levantado a 5 m de altura. Qual a energia potencial gravitacional acumulada? (g = 10 m/s²)',
+    options: ['100 J', '50 J', '200 J', '25 J'],
+    correctIndex: 0,
+    explanation: 'Ep = mgh = 2 × 10 × 5 = 100 J.',
+  },
+  {
+    id: 'q10',
+    subjectId: 'fisica',
+    topicId: 'eletricidade',
+    difficulty: 'medium',
+    year: 2022,
+    text: 'Um circuito tem resistência de 10 Ω e é ligado a uma fonte de 220 V. Qual a corrente elétrica?',
+    options: ['22 A', '2200 A', '210 A', '0,045 A'],
+    correctIndex: 0,
+    explanation: 'Pela Lei de Ohm: I = V/R = 220/10 = 22 A.',
+  },
+  {
+    id: 'q11',
+    subjectId: 'fisica',
+    topicId: 'ondas',
+    difficulty: 'easy',
+    year: 2021,
+    text: 'Uma onda sonora tem frequência de 440 Hz e velocidade de 340 m/s. Qual é o seu comprimento de onda?',
+    options: ['≈ 0,77 m', '≈ 1,3 m', '≈ 149.600 m', '≈ 7,7 m'],
+    correctIndex: 0,
+    explanation: 'λ = v/f = 340/440 ≈ 0,77 m.',
+  },
+
+  // QUÍMICA
+  {
+    id: 'q12',
+    subjectId: 'quimica',
+    topicId: 'estequiometria',
+    difficulty: 'hard',
+    year: 2023,
+    text: 'Na reação 2H₂ + O₂ → 2H₂O, quantos gramas de H₂O são produzidos a partir de 4 g de H₂? (H=1, O=16)',
+    options: ['36 g', '18 g', '32 g', '4 g'],
+    correctIndex: 0,
+    explanation: '4 g de H₂ = 4/2 = 2 mol de H₂. A estequiometria mostra que 2 mol H₂ → 2 mol H₂O. M(H₂O) = 18 g/mol. Logo 2 × 18 = 36 g.',
+  },
+  {
+    id: 'q13',
+    subjectId: 'quimica',
+    topicId: 'quimica-organica',
+    difficulty: 'medium',
+    year: 2022,
+    text: 'O etanol (C₂H₅OH) é classificado como:',
+    options: ['Álcool primário', 'Éter', 'Aldeído', 'Ácido carboxílico'],
+    correctIndex: 0,
+    explanation: 'O etanol possui o grupo funcional -OH ligado a um carbono primário (ligado a apenas um carbono), classificando-o como álcool primário.',
+  },
+
+  // HISTÓRIA
+  {
+    id: 'q14',
+    subjectId: 'historia',
+    topicId: 'era-vargas',
+    difficulty: 'medium',
+    year: 2023,
+    text: 'O Estado Novo (1937-1945) de Getúlio Vargas é caracterizado como:',
+    options: [
+      'Regime autoritário com centralização do poder e supressão do Congresso',
+      'Período democrático com eleições livres e pluripartidarismo',
+      'Governo militar sem participação de civis',
+      'República Oligárquica com domínio das elites cafeicultoras',
+    ],
+    correctIndex: 0,
+    explanation: 'O Estado Novo foi um regime ditatorial implantado por Vargas em 1937, que fechou o Congresso, aboliu os partidos políticos e centralizou o poder no Executivo.',
+  },
+  {
+    id: 'q15',
+    subjectId: 'historia',
+    topicId: 'direitos-humanos',
+    difficulty: 'easy',
+    year: 2022,
+    text: 'A Declaração Universal dos Direitos Humanos foi proclamada pela ONU em:',
+    options: ['1948', '1945', '1960', '1989'],
+    correctIndex: 0,
+    explanation: 'A DUDH foi adotada e proclamada pela Assembleia Geral da ONU em 10 de dezembro de 1948, após as atrocidades da Segunda Guerra Mundial.',
+  },
+
+  // GEOGRAFIA
+  {
+    id: 'q16',
+    subjectId: 'geografia',
+    topicId: 'meio-ambiente',
+    difficulty: 'medium',
+    year: 2023,
+    text: 'O efeito estufa é um fenômeno natural essencial à vida, porém o aumento de gases como CO₂ por atividade humana provoca:',
+    options: [
+      'Aquecimento global e alterações climáticas',
+      'Resfriamento global e expansão das calotas polares',
+      'Diminuição da camada de ozônio apenas',
+      'Aumento da biodiversidade nas regiões tropicais',
+    ],
+    correctIndex: 0,
+    explanation: 'O aumento de gases do efeito estufa (CO₂, CH₄, N₂O) amplifica o efeito estufa natural, retendo mais calor na atmosfera e provocando aquecimento global.',
+  },
+  {
+    id: 'q17',
+    subjectId: 'geografia',
+    topicId: 'globalizacao',
+    difficulty: 'easy',
+    year: 2021,
+    text: 'A globalização é caracterizada principalmente por:',
+    options: [
+      'Intensificação das relações econômicas, culturais e tecnológicas entre os países',
+      'Isolamento econômico entre nações desenvolvidas e em desenvolvimento',
+      'Homogeneização cultural total das sociedades mundiais',
+      'Diminuição do comércio internacional e das migrações',
+    ],
+    correctIndex: 0,
+    explanation: 'A globalização é um processo de integração mundial que envolve fluxos de capitais, mercadorias, informações, culturas e pessoas entre diferentes países.',
+  },
+
+  // PORTUGUÊS
+  {
+    id: 'q18',
+    subjectId: 'portugues',
+    topicId: 'interpretacao',
+    difficulty: 'medium',
+    year: 2023,
+    text: 'Na frase "A ciência avança, mas os preconceitos persistem", o conectivo "mas" estabelece uma relação de:',
+    options: ['Adversidade', 'Causalidade', 'Conclusão', 'Explicação'],
+    correctIndex: 0,
+    explanation: 'O conectivo "mas" (assim como "porém", "contudo", "entretanto") estabelece relação de adversidade, indicando oposição ou contraste entre as orações.',
+  },
+  {
+    id: 'q19',
+    subjectId: 'portugues',
+    topicId: 'gramatica',
+    difficulty: 'easy',
+    year: 2022,
+    text: 'Em "Os alunos entregaram os trabalhos", o sujeito da oração é:',
+    options: ['Os alunos', 'Os trabalhos', 'Entregaram', 'Os alunos entregaram'],
+    correctIndex: 0,
+    explanation: '"Os alunos" é o sujeito simples e determinado da oração, pois é o termo sobre o qual se faz a declaração e concorda com o verbo "entregaram".',
+  },
+
+  // FILOSOFIA
+  {
+    id: 'q20',
+    subjectId: 'filosofia',
+    topicId: 'filosofia-moderna',
+    difficulty: 'hard',
+    year: 2022,
+    text: '"Penso, logo existo" (Cogito ergo sum) é o princípio fundamental de:',
+    options: ['René Descartes', 'Immanuel Kant', 'John Locke', 'David Hume'],
+    correctIndex: 0,
+    explanation: 'René Descartes, no "Discurso do Método" (1637), usa a dúvida metódica para chegar à única certeza inquestionável: o ato de pensar prova a existência do pensador.',
+  },
+  {
+    id: 'q21',
+    subjectId: 'sociologia',
+    topicId: 'conflitos-sociais',
+    difficulty: 'medium',
+    year: 2023,
+    text: 'O conceito de "habitus" desenvolvido por Pierre Bourdieu refere-se a:',
+    options: [
+      'Disposições incorporadas que orientam práticas e percepções dos indivíduos',
+      'Conjunto de leis e normas que regulam o comportamento social',
+      'Capital econômico acumulado pelas classes dominantes',
+      'Estratégias conscientes de mobilidade social',
+    ],
+    correctIndex: 0,
+    explanation: 'Habitus, para Bourdieu, são esquemas de percepção, pensamento e ação internalizados pelos indivíduos ao longo da socialização, que orientam suas práticas de forma quase automática.',
+  },
+
+  // FISIOLOGIA
+  {
+    id: 'q22',
+    subjectId: 'biologia',
+    topicId: 'fisiologia',
+    difficulty: 'medium',
+    year: 2021,
+    text: 'O sistema imunológico produz anticorpos. Qual célula é responsável pela produção de anticorpos?',
+    options: ['Linfócitos B', 'Linfócitos T', 'Neutrófilos', 'Eritrócitos'],
+    correctIndex: 0,
+    explanation: 'Os linfócitos B se diferenciam em plasmócitos, que produzem anticorpos (imunoglobulinas) específicos para cada antígeno.',
+  },
+  {
+    id: 'q23',
+    subjectId: 'matematica',
+    topicId: 'progressoes',
+    difficulty: 'medium',
+    year: 2022,
+    text: 'Em uma PA com primeiro termo a₁ = 3 e razão r = 4, qual é o 5º termo?',
+    options: ['19', '15', '23', '12'],
+    correctIndex: 0,
+    explanation: 'aₙ = a₁ + (n-1)r. a₅ = 3 + (5-1)×4 = 3 + 16 = 19.',
+  },
+  {
+    id: 'q24',
+    subjectId: 'fisica',
+    topicId: 'termodinamica',
+    difficulty: 'hard',
+    year: 2023,
+    text: 'O rendimento de uma máquina térmica que opera entre fontes de 400 K (quente) e 200 K (fria) é:',
+    options: ['50%', '25%', '75%', '100%'],
+    correctIndex: 0,
+    explanation: 'η = 1 – Tfria/Tquente = 1 – 200/400 = 1 – 0,5 = 0,5 = 50%. Este é o rendimento de Carnot.',
+  },
+  {
+    id: 'q25',
+    subjectId: 'quimica',
+    topicId: 'fisico-quimica',
+    difficulty: 'medium',
+    year: 2021,
+    text: 'Qual o pH de uma solução com [H⁺] = 10⁻³ mol/L?',
+    options: ['3', '7', '11', '-3'],
+    correctIndex: 0,
+    explanation: 'pH = -log[H⁺] = -log(10⁻³) = 3. Essa solução é ácida (pH < 7).',
+  },
+]
+
+export function getQuestionsBySubject(subjectId: string): Question[] {
+  return QUESTIONS.filter((q) => q.subjectId === subjectId)
+}
+
+export function getQuestionsByArea(area: string, subjects: { id: string; area: string }[]): Question[] {
+  const subjectIds = subjects.filter((s) => s.area === area).map((s) => s.id)
+  return QUESTIONS.filter((q) => subjectIds.includes(q.subjectId))
+}
+
+export function getRandomQuestions(count: number, filterSubjects?: string[]): Question[] {
+  const pool = filterSubjects ? QUESTIONS.filter((q) => filterSubjects.includes(q.subjectId)) : QUESTIONS
+  const shuffled = [...pool].sort(() => Math.random() - 0.5)
+  return shuffled.slice(0, count)
+}
