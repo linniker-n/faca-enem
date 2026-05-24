@@ -26,7 +26,7 @@ Pontuação por competência: 0, 40, 80, 120, 160 ou 200 pontos.
 Nota máxima total: 1000 pontos.
 Seja criterioso, justo e didático. O feedback deve ser específico e útil para o estudante melhorar.`
 
-const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
 
 export async function POST(req: NextRequest) {
   const apiKey = process.env.GEMINI_API_KEY
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
 
     const feedback = JSON.parse(jsonMatch[0]) as Record<string, unknown>
     feedback.evaluatedAt = new Date().toISOString()
-    feedback.model = 'gemini-2.0-flash'
+    feedback.model = 'gemini-1.5-flash'
 
     return Response.json({ feedback })
   } catch (err: unknown) {
