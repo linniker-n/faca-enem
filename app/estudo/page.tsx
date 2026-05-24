@@ -1,22 +1,35 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, Clock, RefreshCw, ChevronRight, Target, AlertCircle, CheckCircle, Sparkles } from 'lucide-react'
+import {
+  BookOpen, Clock, RefreshCw, ChevronRight, Target,
+  AlertCircle, CheckCircle, Sparkles, Search,
+} from 'lucide-react'
 import { storage } from '@/lib/storage'
 import { generateStudyPlan, REASON_LABELS } from '@/lib/study-plan'
-import { AREA_LABELS } from '@/lib/data/subjects'
+import { AREA_LABELS, SUBJECTS } from '@/lib/data/subjects'
 import type { StudyPlan } from '@/lib/study-plan'
 import type { UserProgress } from '@/lib/types'
 
+const AREAS = ['linguagens', 'humanas', 'natureza', 'matematica'] as const
+const AREA_COLORS: Record<string, string> = {
+  linguagens: '#3b82f6', humanas: '#f97316', natureza: '#22c55e', matematica: '#ef4444',
+}
+
 export default function EstudoPage() {
+  const router = useRouter()
   const [plan, setPlan] = useState<StudyPlan | null>(null)
   const [progress, setProgress] = useState<UserProgress | null>(null)
   const [loaded, setLoaded] = useState(false)
 
+  // Tema livre
+  const [customTopic, setCustomTopic] = useState('')
+  const [customSubject, setCustomSubject] = useState('')
+
   function loadPlan(p: UserProgress) {
-    const newPlan = generateStudyPlan(p, 6)
-    setPlan(newPlan)
+    setPlan(generateStudyPlan(p, 6))
   }
 
   useEffect(() => {
@@ -28,6 +41,15 @@ export default function EstudoPage() {
 
   function regenerate() {
     if (progress) loadPlan(progress)
+  }
+
+  function handleCustomStudy(e: React.FormEvent) {
+    e.preventDefault()
+    const t = customTopic.trim()
+    if (!t) return
+    const params = new URLSearchParams({ q: t })
+    if (customSubject) params.set('s', customSubject)
+    router.push(`/estudo/_livre?${params.toString()}`)
   }
 
   const REASON_ICON = {
@@ -49,7 +71,43 @@ export default function EstudoPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto fade-in">
-      {/* Header */}
+
+      {/* ── Estudar tema livre ──────────────────────────────────── */}
+      <div className="bg-slate-900 border border-violet-500/30 rounded-2xl p-5 mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Search size={16} className="text-violet-400" />
+          <h2 className="text-sm font-semibold text-white">Estudar qualquer tema</h2>
+          <span className="text-xs bg-violet-500/20 text-violet-400 border border-violet-500/30 px-2 py-0.5 rounded-full">✦ IA</span>
+        </div>
+        <p className="text-xs text-slate-400 mb-4">Digite qualquer assunto e a IA vai gerar uma aula completa sobre ele.</p>
+        <form onSubmit={handleCustomStudy} className="flex flex-col sm:flex-row gap-2">
+          <input
+            value={customTopic}
+            onChange={(e) => setCustomTopic(e.target.value)}
+            placeholder="Ex: Fotossíntese, Segunda Guerra Mundial, Equações do 2º grau..."
+            className="flex-1 bg-slate-800 border border-slate-700 focus:border-violet-500 text-white placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm outline-none transition"
+          />
+          <select
+            value={customSubject}
+            onChange={(e) => setCustomSubject(e.target.value)}
+            className="bg-slate-800 border border-slate-700 text-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none appearance-none cursor-pointer"
+          >
+            <option value="">Matéria (opcional)</option>
+            {SUBJECTS.map((s) => (
+              <option key={s.id} value={s.name}>{s.name}</option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            disabled={!customTopic.trim()}
+            className="bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition"
+          >
+            Estudar →
+          </button>
+        </form>
+      </div>
+
+      {/* ── Header plano ───────────────────────────────────────── */}
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -70,7 +128,6 @@ export default function EstudoPage() {
         </button>
       </div>
 
-      {/* Info de personalização */}
       {!hasProgress && (
         <div className="bg-violet-500/10 border border-violet-500/20 rounded-xl p-4 mb-6 flex items-start gap-3">
           <Sparkles size={18} className="text-violet-400 shrink-0 mt-0.5" />
@@ -83,7 +140,7 @@ export default function EstudoPage() {
         </div>
       )}
 
-      {/* Resumo do plano */}
+      {/* Resumo */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-white">{plan.items.length}</p>
@@ -101,7 +158,7 @@ export default function EstudoPage() {
         </div>
       </div>
 
-      {/* Lista de tópicos do plano */}
+      {/* Lista de tópicos */}
       <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wide mb-3">Tópicos de hoje</h2>
       <div className="space-y-3 mb-8">
         {plan.items.map((item, idx) => {
@@ -112,19 +169,14 @@ export default function EstudoPage() {
               href={`/estudo/${item.topicId}`}
               className="flex items-center gap-4 bg-slate-900 border border-slate-800 hover:border-slate-600 rounded-xl p-4 transition group"
             >
-              {/* Número */}
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
                 style={{ background: item.subjectColor + '30', border: `1px solid ${item.subjectColor}60` }}
               >
                 <span style={{ color: item.subjectColor }}>{idx + 1}</span>
               </div>
-
-              {/* Info principal */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="text-sm font-medium text-white truncate">{item.topicName}</p>
-                </div>
+                <p className="text-sm font-medium text-white truncate mb-0.5">{item.topicName}</p>
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-xs text-slate-500">{item.subjectName}</span>
                   <div className="flex items-center gap-1">
@@ -136,16 +188,12 @@ export default function EstudoPage() {
                   )}
                 </div>
               </div>
-
-              {/* Tempo + seta */}
               <div className="flex items-center gap-3 shrink-0">
                 <div className="flex items-center gap-1 text-slate-500">
                   <Clock size={13} />
                   <span className="text-xs">{item.estimatedMinutes}min</span>
                 </div>
-                {!item.hasContent && (
-                  <span className="text-xs text-slate-600">sem material</span>
-                )}
+                {!item.hasContent && <span className="text-xs text-slate-600">sem material</span>}
                 <ChevronRight size={16} className="text-slate-600 group-hover:text-slate-300 transition" />
               </div>
             </Link>
@@ -156,11 +204,8 @@ export default function EstudoPage() {
       {/* Explorar por área */}
       <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wide mb-3">Explorar todas as matérias</h2>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {(['linguagens', 'humanas', 'natureza', 'matematica'] as const).map((area) => {
-          const colors: Record<string, string> = {
-            linguagens: '#3b82f6', humanas: '#f97316', natureza: '#22c55e', matematica: '#ef4444',
-          }
-          const color = colors[area]
+        {AREAS.map((area) => {
+          const color = AREA_COLORS[area]
           return (
             <Link
               key={area}

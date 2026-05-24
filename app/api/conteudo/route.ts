@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
@@ -9,6 +8,8 @@ Não defina — ensine. Não liste — explique. O aluno deve sair da sua aula e
 Use linguagem direta, clara e envolvente, como um professor que quer que o aluno aprenda de verdade.
 Retorne APENAS JSON válido, sem markdown, sem texto fora do JSON.`
 
+const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+
 export async function GET(req: NextRequest) {
   const topic = req.nextUrl.searchParams.get('topic')
   const subject = req.nextUrl.searchParams.get('subject') ?? ''
@@ -17,14 +18,7 @@ export async function GET(req: NextRequest) {
   if (!apiKey) return Response.json({ error: 'GEMINI_API_KEY não configurada' }, { status: 503 })
   if (!topic) return Response.json({ error: 'topic obrigatório' }, { status: 400 })
 
-  try {
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      systemInstruction: SYSTEM_PROMPT,
-    })
-
-    const prompt = `Prepare uma aula completa sobre "${topic}"${subject ? ` (matéria: ${subject})` : ''} para um aluno que vai fazer o ENEM.
+  const prompt = `Prepare uma aula completa sobre "${topic}"${subject ? ` (matéria: ${subject})` : ''} para um aluno que vai fazer o ENEM.
 
 Aja como um professor na frente da turma: explique os conceitos passo a passo, use analogias do dia a dia, antecipe dúvidas comuns e as responda dentro do texto. Não apenas defina — ensine.
 
@@ -58,8 +52,30 @@ Retorne exatamente este JSON (sem texto fora dele):
   "example": "Um exemplo real de como este tema aparece no ENEM: descreva a situação-problema típica, o raciocínio necessário para resolver e a resposta. Se houver fórmula, explique cada parte dela."
 }`
 
-    const result = await model.generateContent(prompt)
-    const raw = result.response.text()
+  try {
+    const res = await fetch(`${GEMINI_API}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+      }),
+    })
+
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}))
+      const msg = (errBody as { error?: { message?: string } }).error?.message ?? `HTTP ${res.status}`
+      return Response.json({ error: `Gemini: ${msg}` }, { status: 500 })
+    }
+
+    type GeminiResponse = {
+      candidates?: { content?: { parts?: { text?: string }[] } }[]
+    }
+    const json = (await res.json()) as GeminiResponse
+    const raw = json.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+
+    if (!raw) return Response.json({ error: 'Resposta vazia do Gemini' }, { status: 500 })
 
     // Extrai JSON mesmo se vier dentro de bloco markdown (```json ... ```)
     let jsonStr: string | null = null
@@ -71,13 +87,12 @@ Retorne exatamente este JSON (sem texto fora dele):
       if (objMatch) jsonStr = objMatch[0]
     }
 
-    if (!jsonStr) return Response.json({ error: 'Resposta inválida da IA' }, { status: 500 })
+    if (!jsonStr) return Response.json({ error: 'JSON não encontrado na resposta da IA' }, { status: 500 })
 
     let content: unknown
     try {
       content = JSON.parse(jsonStr)
     } catch {
-      // Tenta sanitizar o JSON antes de falhar
       const sanitized = jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')
       try {
         content = JSON.parse(sanitized)

@@ -1,6 +1,7 @@
 'use client'
 
 import { use, useEffect, useState, useRef, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, Play, Pause, RotateCcw, ExternalLink,
@@ -71,10 +72,24 @@ function setCachedVideos(query: string, videos: YTVideo[]) {
 
 export default function EstudoTopico({ params }: { params: Promise<{ topico: string }> }) {
   const { topico } = use(params)
+  const searchParams = useSearchParams()
 
-  const subject = SUBJECTS.find((s) => s.topics.some((t) => t.id === topico))
-  const topic = subject?.topics.find((t) => t.id === topico)
-  const content = getTopicContent(topico)
+  // Tópico personalizado (quando topico === '_livre')
+  const isCustom = topico === '_livre'
+  const customTopicName = searchParams.get('q') ?? ''
+  const customSubjectName = searchParams.get('s') ?? ''
+
+  const subject = isCustom ? null : SUBJECTS.find((s) => s.topics.some((t) => t.id === topico))
+  const topic = isCustom ? null : subject?.topics.find((t) => t.id === topico)
+  const content = isCustom ? null : getTopicContent(topico)
+
+  // Nomes efetivos para exibição e chamadas à API
+  const effectiveTopicName = isCustom ? customTopicName : (topic?.name ?? '')
+  const effectiveSubjectName = isCustom ? customSubjectName : (subject?.name ?? '')
+  const effectiveColor = subject?.color ?? '#8b5cf6'
+
+  // Chave de cache única (inclui nome do tópico para temas livres)
+  const cacheKey = isCustom ? `_livre:${customTopicName}` : topico
 
   const [activeTab, setActiveTab] = useState<Tab>('artigo')
 
@@ -87,7 +102,7 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
   // Conteúdo IA (Gemini)
   const [aiContent, setAiContent] = useState<AIContent | null>(null)
   const [aiLoading, setAiLoading] = useState(true)
-  const [aiError, setAiError] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
 
   // YouTube (dinâmico)
   const [ytVideos, setYtVideos] = useState<YTVideo[]>([])
@@ -104,40 +119,39 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
   const [showExplanation, setShowExplanation] = useState(false)
   const [quizDone, setQuizDone] = useState(false)
 
-  // ── Busca conteúdo via Gemini (primário) ─────────────────────
+  // ── Busca conteúdo via Gemini ─────────────────────────────────
   const fetchAIContent = useCallback(async () => {
-    if (!topic) return
-    const cached = getAICache(topico)
+    if (!effectiveTopicName) return
+    const cached = getAICache(cacheKey)
     if (cached) { setAiContent(cached); setAiLoading(false); return }
 
     setAiLoading(true)
-    setAiError(false)
+    setAiError(null)
     try {
       const res = await fetch(
-        `/api/conteudo?topic=${encodeURIComponent(topic.name)}&subject=${encodeURIComponent(subject?.name ?? '')}`
+        `/api/conteudo?topic=${encodeURIComponent(effectiveTopicName)}&subject=${encodeURIComponent(effectiveSubjectName)}`
       )
-      const data = await res.json()
+      const data = await res.json() as { content?: AIContent; error?: string }
       if (data.content) {
         setAiContent(data.content)
-        setAICache(topico, data.content)
+        setAICache(cacheKey, data.content)
       } else {
-        setAiError(true)
+        setAiError(data.error ?? 'Resposta inválida da IA')
       }
-    } catch {
-      setAiError(true)
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'Falha na conexão')
     } finally {
       setAiLoading(false)
     }
-  }, [topic, subject, topico])
+  }, [effectiveTopicName, effectiveSubjectName, cacheKey])
 
   useEffect(() => { fetchAIContent() }, [fetchAIContent])
 
   // ── Busca YouTube via API route (com cache) ───────────────────
   const fetchVideos = useCallback(async () => {
-    const query = content?.youtubeQuery ?? (topic?.name ? `${topic.name} aula ENEM` : '')
+    const query = content?.youtubeQuery ?? (effectiveTopicName ? `${effectiveTopicName} aula ENEM` : '')
     if (!query) return
 
-    // Tenta cache local primeiro
     const cached = getCachedVideos(query)
     if (cached && cached.length > 0) { setYtVideos(cached); return }
 
@@ -145,7 +159,7 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
     setYtError('')
     try {
       const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}&max=4`)
-      const data = await res.json()
+      const data = await res.json() as { videos?: YTVideo[]; error?: string }
 
       if (data.error?.includes('não configurada')) {
         setYtNoKey(true)
@@ -159,7 +173,7 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
       setYtError('Falha ao buscar vídeos')
     }
     setYtLoading(false)
-  }, [content, topic])
+  }, [content, effectiveTopicName])
 
   useEffect(() => { fetchVideos() }, [fetchVideos])
 
@@ -179,9 +193,12 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
   const timerDone = seconds >= targetSeconds
 
   // ── Quiz ──────────────────────────────────────────────────────
+  const topicQuestions = QUESTIONS.filter((q) =>
+    !isCustom && (q.topicId === topico || q.subjectId === subject?.id)
+  )
+
   function startQuiz() {
-    const qs = QUESTIONS.filter((q) => q.topicId === topico || q.subjectId === subject?.id)
-      .sort(() => Math.random() - 0.5).slice(0, 5)
+    const qs = topicQuestions.sort(() => Math.random() - 0.5).slice(0, 5)
     if (!qs.length) return
     setQuizQuestions(qs)
     setQuizIdx(0); setQuizAnswers({}); setShowExplanation(false); setQuizDone(false)
@@ -204,7 +221,8 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
     }
   }
 
-  if (!subject || !topic) {
+  // Tópico não encontrado (apenas para rotas não-customizadas)
+  if (!isCustom && (!subject || !topic)) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 p-6">
         <AlertCircle size={36} className="text-slate-600" />
@@ -214,10 +232,20 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
     )
   }
 
+  // Tema livre sem parâmetro
+  if (isCustom && !customTopicName) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 p-6">
+        <AlertCircle size={36} className="text-slate-600" />
+        <p className="text-slate-400">Nenhum tema informado.</p>
+        <Link href="/estudo" className="text-violet-400 hover:underline text-sm">← Voltar ao plano</Link>
+      </div>
+    )
+  }
+
   const currentVideo = ytVideos[videoIdx]
   const LETTERS = ['A', 'B', 'C', 'D', 'E']
-  const topicQuestions = QUESTIONS.filter((q) => q.topicId === topico || q.subjectId === subject.id)
-  const youtubeQuery = content?.youtubeQuery ?? `${topic.name} aula ENEM`
+  const youtubeQuery = content?.youtubeQuery ?? `${effectiveTopicName} aula ENEM`
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -228,10 +256,12 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
         </Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: subject.color }} />
-            <p className="text-xs text-slate-500 truncate">{subject.name}</p>
+            {isCustom
+              ? <span className="text-xs bg-violet-500/20 text-violet-400 border border-violet-500/30 px-2 py-0.5 rounded-full">✦ Tema livre</span>
+              : <><div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: effectiveColor }} /><p className="text-xs text-slate-500 truncate">{effectiveSubjectName}</p></>
+            }
           </div>
-          <p className="text-sm font-semibold text-white truncate">{topic.name}</p>
+          <p className="text-sm font-semibold text-white truncate">{effectiveTopicName}</p>
         </div>
         {/* Timer circular */}
         <div className="flex items-center gap-3">
@@ -239,7 +269,7 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
             <svg className="w-10 h-10 -rotate-90" viewBox="0 0 40 40">
               <circle cx="20" cy="20" r="16" fill="none" stroke="#1e293b" strokeWidth="3" />
               <circle cx="20" cy="20" r="16" fill="none"
-                stroke={timerDone ? '#22c55e' : subject.color} strokeWidth="3"
+                stroke={timerDone ? '#22c55e' : effectiveColor} strokeWidth="3"
                 strokeDasharray={`${2 * Math.PI * 16}`}
                 strokeDashoffset={`${2 * Math.PI * 16 * (1 - timerProgress / 100)}`}
                 strokeLinecap="round" className="transition-all duration-1000"
@@ -261,7 +291,7 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
       </div>
 
       {/* Banner quiz após timer */}
-      {timerDone && quizPhase === 'idle' && (
+      {timerDone && quizPhase === 'idle' && !isCustom && (
         <div className="shrink-0 bg-emerald-500/10 border-b border-emerald-500/20 px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CheckCircle size={16} className="text-emerald-400" />
@@ -279,7 +309,7 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
         {([
           { key: 'artigo' as Tab, icon: FileText, label: 'Artigo' },
           { key: 'video' as Tab, icon: Video, label: ytVideos.length > 0 ? `Vídeos (${ytVideos.length})` : 'Vídeos' },
-          { key: 'quiz' as Tab, icon: ClipboardList, label: `Quiz (${Math.min(topicQuestions.length, 5)})` },
+          ...(!isCustom ? [{ key: 'quiz' as Tab, icon: ClipboardList, label: `Quiz (${Math.min(topicQuestions.length, 5)})` }] : []),
         ]).map(({ key, icon: Icon, label }) => (
           <button key={key} onClick={() => {
             setActiveTab(key)
@@ -304,7 +334,7 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
             {aiLoading && (
               <div className="flex flex-col items-center gap-3 py-16 justify-center">
                 <Loader2 size={24} className="animate-spin text-violet-400" />
-                <p className="text-slate-400 text-sm">Gerando material de estudo com IA...</p>
+                <p className="text-slate-400 text-sm">Gerando aula com IA...</p>
               </div>
             )}
 
@@ -316,10 +346,8 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
                   <span className="text-xs bg-violet-500/20 text-violet-400 border border-violet-500/30 px-2.5 py-1 rounded-full shrink-0 ml-3 mt-0.5">✦ IA</span>
                 </div>
 
-                {/* Introdução */}
                 <p className="text-slate-300 text-sm leading-relaxed">{aiContent.intro}</p>
 
-                {/* Pontos essenciais */}
                 <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4">
                   <h3 className="text-sm font-semibold text-white mb-3">Pontos Essenciais para o ENEM</h3>
                   <ul className="space-y-2">
@@ -332,7 +360,6 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
                   </ul>
                 </div>
 
-                {/* Seções de conteúdo */}
                 {aiContent.sections.map((section, i) => (
                   <div key={i} className="border-t border-slate-800 pt-4">
                     <h3 className="text-sm font-semibold text-white mb-3">{section.title}</h3>
@@ -344,13 +371,11 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
                   </div>
                 ))}
 
-                {/* No ENEM */}
                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
                   <h3 className="text-sm font-semibold text-amber-400 mb-2">Como cai no ENEM</h3>
                   <p className="text-sm text-slate-300 leading-relaxed">{aiContent.enemContext}</p>
                 </div>
 
-                {/* Exemplo */}
                 {aiContent.example && (
                   <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
                     <h3 className="text-sm font-semibold text-white mb-2">Exemplo Prático</h3>
@@ -358,7 +383,6 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
                   </div>
                 )}
 
-                {/* Dicas de estudo */}
                 <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
                   <h3 className="text-sm font-semibold text-emerald-400 mb-2">Dicas de Estudo</h3>
                   <ul className="space-y-1.5">
@@ -370,7 +394,6 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
                   </ul>
                 </div>
 
-                {/* Recuperação ativa */}
                 <div className="bg-violet-500/10 border border-violet-500/20 rounded-xl p-4">
                   <p className="text-xs text-violet-300 font-medium mb-1">Recuperação Ativa</p>
                   <p className="text-xs text-slate-400">Após ler, feche os olhos e resuma o conteúdo em voz alta. Depois teste na aba <strong className="text-slate-300">Quiz</strong>.</p>
@@ -383,7 +406,11 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
               <div className="text-center py-16">
                 <AlertCircle size={36} className="text-slate-600 mx-auto mb-3" />
                 <p className="text-white font-medium mb-1">Não foi possível gerar o conteúdo</p>
-                <p className="text-slate-400 text-sm mb-5">Verifique sua conexão e tente novamente.</p>
+                {aiError.includes('não configurada') ? (
+                  <p className="text-slate-400 text-sm mb-5">A chave da API Gemini não está configurada no servidor.</p>
+                ) : (
+                  <p className="text-slate-500 text-xs mb-5 font-mono bg-slate-800 px-3 py-1.5 rounded-lg inline-block">{aiError}</p>
+                )}
                 <button onClick={fetchAIContent}
                   className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition">
                   <RotateCcw size={14} /> Tentar novamente
@@ -396,7 +423,6 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
         {/* VÍDEO */}
         {activeTab === 'video' && (
           <div className="p-6 max-w-3xl mx-auto">
-            {/* Sem chave configurada */}
             {ytNoKey && (
               <div className="text-center py-8">
                 <Video size={36} className="text-slate-700 mx-auto mb-3" />
@@ -412,7 +438,6 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
               </div>
             )}
 
-            {/* Carregando */}
             {ytLoading && !ytNoKey && (
               <div className="flex items-center gap-3 py-12 justify-center">
                 <Loader2 size={20} className="animate-spin text-red-400" />
@@ -420,7 +445,6 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
               </div>
             )}
 
-            {/* Erro */}
             {ytError && !ytNoKey && !ytLoading && (
               <div className="text-center py-8">
                 <AlertCircle size={32} className="text-slate-600 mx-auto mb-3" />
@@ -429,10 +453,8 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
               </div>
             )}
 
-            {/* Vídeos encontrados */}
             {!ytLoading && !ytNoKey && ytVideos.length > 0 && (
               <div className="fade-in">
-                {/* Player */}
                 <div className="relative bg-black rounded-2xl overflow-hidden mb-4" style={{ paddingBottom: '56.25%' }}>
                   <iframe key={currentVideo.id}
                     src={`https://www.youtube-nocookie.com/embed/${currentVideo.id}?rel=0&modestbranding=1`}
@@ -441,8 +463,6 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
                     allowFullScreen
                   />
                 </div>
-
-                {/* Info do vídeo atual */}
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <p className="font-medium text-white leading-snug">{currentVideo.title}</p>
@@ -454,8 +474,6 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
                     <ExternalLink size={12} /> YouTube
                   </a>
                 </div>
-
-                {/* Thumbnail grid */}
                 {ytVideos.length > 1 && (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
                     {ytVideos.map((v, i) => (
@@ -472,11 +490,10 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
                     ))}
                   </div>
                 )}
-
                 <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(youtubeQuery)}`}
                   target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-300 transition">
-                  <Search size={14} /> Buscar mais vídeos sobre {topic.name} <ExternalLink size={12} />
+                  <Search size={14} /> Buscar mais vídeos sobre {effectiveTopicName} <ExternalLink size={12} />
                 </a>
               </div>
             )}
@@ -484,7 +501,7 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
         )}
 
         {/* QUIZ */}
-        {activeTab === 'quiz' && (
+        {activeTab === 'quiz' && !isCustom && (
           <div className="p-6 max-w-2xl mx-auto">
             {topicQuestions.length === 0 ? (
               <div className="text-center py-12">
@@ -495,7 +512,7 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
             ) : quizPhase === 'idle' ? (
               <div className="text-center py-12">
                 <ClipboardList size={36} className="text-emerald-500 mx-auto mb-4" />
-                <p className="text-white font-medium mb-1">Quiz sobre {topic.name}</p>
+                <p className="text-white font-medium mb-1">Quiz sobre {effectiveTopicName}</p>
                 <p className="text-slate-400 text-sm mb-6">{Math.min(topicQuestions.length, 5)} questões selecionadas</p>
                 <button onClick={startQuiz} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-lg font-medium transition">
                   Iniciar Quiz
