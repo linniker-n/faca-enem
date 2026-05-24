@@ -533,22 +533,8 @@ export function getTopicContent(topicId: string): TopicContent | null {
   return TOPIC_CONTENT[topicId] ?? null
 }
 
-function stripWikiHtml(html: string): string {
-  return html
-    .replace(/<sup[^>]*>[\s\S]*?<\/sup>/gi, '')
-    .replace(/<figure[^>]*>[\s\S]*?<\/figure>/gi, '')
-    .replace(/<table[^>]*>[\s\S]*?<\/table>/gi, '')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<\/li>/gi, '\n')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/&nbsp;/g, ' ').replace(/&#160;/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
-}
-
-// Busca artigo completo da Wikipedia PT com seções educacionais
+// Busca resumo da Wikipedia PT — usa apenas /page/summary que suporta CORS
+// /page/mobile-sections bloqueia CORS em produção, por isso não é usado aqui
 export async function fetchWikipediaSummary(articleTitle: string): Promise<{
   title: string
   extract: string
@@ -558,37 +544,18 @@ export async function fetchWikipediaSummary(articleTitle: string): Promise<{
 } | null> {
   try {
     const encoded = encodeURIComponent(articleTitle)
-    const [summaryRes, sectionsRes] = await Promise.all([
-      fetch(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encoded}`, {
-        headers: { Accept: 'application/json' },
-      }),
-      fetch(`https://pt.wikipedia.org/api/rest_v1/page/mobile-sections/${encoded}`, {
-        headers: { Accept: 'application/json' },
-      }),
-    ])
-
-    if (!summaryRes.ok) return null
-    const summary = await summaryRes.json()
-
-    let sections: { title: string; content: string }[] = []
-    if (sectionsRes.ok) {
-      const data = await sectionsRes.json()
-      const raw: { line?: string; text?: string }[] = data.remaining?.sections ?? []
-      sections = raw
-        .filter((s) => s.line && s.text && stripWikiHtml(s.text).length > 60)
-        .slice(0, 6)
-        .map((s) => ({
-          title: s.line!,
-          content: stripWikiHtml(s.text!),
-        }))
-    }
-
+    const res = await fetch(
+      `https://pt.wikipedia.org/api/rest_v1/page/summary/${encoded}`,
+      { headers: { Accept: 'application/json' } }
+    )
+    if (!res.ok) return null
+    const data = await res.json()
     return {
-      title: summary.title,
-      extract: summary.extract ?? '',
-      sections,
-      thumbnail: summary.thumbnail?.source,
-      pageUrl: summary.content_urls?.desktop?.page ?? `https://pt.wikipedia.org/wiki/${encoded}`,
+      title: data.title,
+      extract: data.extract ?? '',
+      sections: [], // seções disponíveis apenas via proxy server-side
+      thumbnail: data.thumbnail?.source,
+      pageUrl: data.content_urls?.desktop?.page ?? `https://pt.wikipedia.org/wiki/${encoded}`,
     }
   } catch {
     return null

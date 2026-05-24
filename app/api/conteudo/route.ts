@@ -58,10 +58,31 @@ Retorne exatamente este JSON (sem texto fora dele):
     const result = await model.generateContent(prompt)
     const raw = result.response.text()
 
-    const jsonMatch = raw.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) return Response.json({ error: 'Resposta inválida da IA' }, { status: 500 })
+    // Extrai JSON mesmo se vier dentro de bloco markdown (```json ... ```)
+    let jsonStr: string | null = null
+    const mdMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+    if (mdMatch) {
+      jsonStr = mdMatch[1]
+    } else {
+      const objMatch = raw.match(/\{[\s\S]*\}/)
+      if (objMatch) jsonStr = objMatch[0]
+    }
 
-    const content = JSON.parse(jsonMatch[0])
+    if (!jsonStr) return Response.json({ error: 'Resposta inválida da IA' }, { status: 500 })
+
+    let content: unknown
+    try {
+      content = JSON.parse(jsonStr)
+    } catch {
+      // Tenta sanitizar o JSON antes de falhar
+      const sanitized = jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')
+      try {
+        content = JSON.parse(sanitized)
+      } catch {
+        return Response.json({ error: 'JSON inválido na resposta da IA' }, { status: 500 })
+      }
+    }
+
     return Response.json({ content })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erro desconhecido'
