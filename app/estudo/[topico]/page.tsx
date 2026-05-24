@@ -8,7 +8,7 @@ import {
   AlertCircle, Loader2, Search,
 } from 'lucide-react'
 import { SUBJECTS } from '@/lib/data/subjects'
-import { getTopicContent, fetchWikipediaSummary } from '@/lib/data/content'
+import { getTopicContent } from '@/lib/data/content'
 import { QUESTIONS } from '@/lib/data/questions'
 import { storage } from '@/lib/storage'
 import type { Question } from '@/lib/types'
@@ -16,14 +16,6 @@ import type { YTVideo } from '@/app/api/youtube/route'
 
 type Tab = 'artigo' | 'video' | 'quiz'
 type QuizPhase = 'idle' | 'running' | 'done'
-
-interface WikiContent {
-  title: string
-  extract: string
-  sections: { title: string; content: string }[]
-  thumbnail?: string
-  pageUrl: string
-}
 
 interface AIContent {
   title: string
@@ -92,16 +84,10 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const targetMinutes = content?.estimatedMinutes ?? 20
 
-  // Conteúdo IA (Gemini) — primário
+  // Conteúdo IA (Gemini)
   const [aiContent, setAiContent] = useState<AIContent | null>(null)
   const [aiLoading, setAiLoading] = useState(true)
-  const [wikiAsFallback, setWikiAsFallback] = useState(false)
-
-  // Wikipedia — fallback quando IA indisponível
-  const [wiki, setWiki] = useState<WikiContent | null>(null)
-  const [wikiIdx, setWikiIdx] = useState(0)
-  const [wikiLoading, setWikiLoading] = useState(false)
-  const [wikiError, setWikiError] = useState(false)
+  const [aiError, setAiError] = useState(false)
 
   // YouTube (dinâmico)
   const [ytVideos, setYtVideos] = useState<YTVideo[]>([])
@@ -125,45 +111,26 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
     if (cached) { setAiContent(cached); setAiLoading(false); return }
 
     setAiLoading(true)
+    setAiError(false)
     try {
       const res = await fetch(
         `/api/conteudo?topic=${encodeURIComponent(topic.name)}&subject=${encodeURIComponent(subject?.name ?? '')}`
       )
-      if (res.status === 503) { setWikiAsFallback(true); return }
       const data = await res.json()
       if (data.content) {
         setAiContent(data.content)
         setAICache(topico, data.content)
       } else {
-        setWikiAsFallback(true)
+        setAiError(true)
       }
     } catch {
-      setWikiAsFallback(true)
+      setAiError(true)
     } finally {
       setAiLoading(false)
     }
   }, [topic, subject, topico])
 
   useEffect(() => { fetchAIContent() }, [fetchAIContent])
-
-  // ── Busca Wikipedia (fallback quando IA indisponível) ─────────
-  const fetchWiki = useCallback(async (idx: number) => {
-    if (!content?.wikipedia.length) return
-    const titles = content.wikipedia
-    if (idx >= titles.length) { setWikiError(true); return }
-    setWikiLoading(true)
-    setWikiError(false)
-    const result = await fetchWikipediaSummary(titles[idx])
-    if (result) {
-      setWiki(result)
-    } else {
-      fetchWiki(idx + 1)
-      setWikiIdx(idx + 1)
-    }
-    setWikiLoading(false)
-  }, [content])
-
-  useEffect(() => { if (wikiAsFallback) fetchWiki(0) }, [wikiAsFallback, fetchWiki])
 
   // ── Busca YouTube via API route (com cache) ───────────────────
   const fetchVideos = useCallback(async () => {
@@ -411,56 +378,17 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
               </article>
             )}
 
-            {/* ── Fallback Wikipedia ──────────────────────────── */}
-            {!aiLoading && !aiContent && (
-              <>
-                {wikiLoading && (
-                  <div className="flex items-center gap-3 py-12 justify-center">
-                    <Loader2 size={20} className="animate-spin text-slate-500" />
-                    <span className="text-slate-400 text-sm">Carregando artigo...</span>
-                  </div>
-                )}
-                {wikiError && (
-                  <div className="text-center py-12">
-                    <AlertCircle size={32} className="text-slate-600 mx-auto mb-3" />
-                    <p className="text-slate-400 text-sm">Conteúdo não encontrado.</p>
-                    <a href={`https://pt.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(topic.name)}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="text-violet-400 hover:underline text-sm mt-2 inline-flex items-center gap-1">
-                      Buscar na Wikipedia <ExternalLink size={12} />
-                    </a>
-                  </div>
-                )}
-                {wiki && !wikiLoading && (
-                  <article className="fade-in space-y-5">
-                    {wiki.thumbnail && (
-                      <img src={wiki.thumbnail} alt={wiki.title} className="w-full max-h-52 object-cover rounded-xl" />
-                    )}
-                    <div className="flex items-start justify-between">
-                      <h2 className="text-xl font-bold text-white leading-snug">{wiki.title}</h2>
-                      <a href={wiki.pageUrl} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition shrink-0 ml-3 mt-1">
-                        Wikipedia <ExternalLink size={11} />
-                      </a>
-                    </div>
-                    <p className="text-slate-300 leading-relaxed text-sm">{wiki.extract}</p>
-                    {wiki.sections.map((section, i) => (
-                      <div key={i} className="border-t border-slate-800 pt-4">
-                        <h3 className="text-sm font-semibold text-white mb-2">{section.title}</h3>
-                        <div className="space-y-2">
-                          {section.content.split('\n\n').filter((p) => p.trim()).map((p, j) => (
-                            <p key={j} className="text-slate-300 text-sm leading-relaxed">{p.trim()}</p>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                    <div className="bg-violet-500/10 border border-violet-500/20 rounded-xl p-4">
-                      <p className="text-xs text-violet-300 font-medium mb-1">Recuperação Ativa</p>
-                      <p className="text-xs text-slate-400">Após ler, feche os olhos e resuma o conteúdo. Depois, teste na aba <strong className="text-slate-300">Quiz</strong>.</p>
-                    </div>
-                  </article>
-                )}
-              </>
+            {/* ── Erro IA ─────────────────────────────────────── */}
+            {!aiLoading && aiError && (
+              <div className="text-center py-16">
+                <AlertCircle size={36} className="text-slate-600 mx-auto mb-3" />
+                <p className="text-white font-medium mb-1">Não foi possível gerar o conteúdo</p>
+                <p className="text-slate-400 text-sm mb-5">Verifique sua conexão e tente novamente.</p>
+                <button onClick={fetchAIContent}
+                  className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition">
+                  <RotateCcw size={14} /> Tentar novamente
+                </button>
+              </div>
             )}
           </div>
         )}

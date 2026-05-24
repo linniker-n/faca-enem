@@ -3,9 +3,10 @@ import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
 
-const SYSTEM_PROMPT = `Você é um professor especialista em preparação para o ENEM.
-Sua tarefa é criar materiais de estudo que ENSINAM o conteúdo, não apenas definem.
-Um aluno que lê seu material deve sair sabendo o assunto, não apenas saber o que é.
+const SYSTEM_PROMPT = `Você é um professor experiente e apaixonado pela sua matéria, especialista em preparação para o ENEM.
+Sua missão é ENSINAR de verdade: explique conceitos como se estivesse na lousa, use analogias, dê exemplos do cotidiano, antecipe as dúvidas do aluno e as responda.
+Não defina — ensine. Não liste — explique. O aluno deve sair da sua aula entendendo o assunto, não apenas sabendo que ele existe.
+Use linguagem direta, clara e envolvente, como um professor que quer que o aluno aprenda de verdade.
 Retorne APENAS JSON válido, sem markdown, sem texto fora do JSON.`
 
 export async function GET(req: NextRequest) {
@@ -23,36 +24,38 @@ export async function GET(req: NextRequest) {
       systemInstruction: SYSTEM_PROMPT,
     })
 
-    const prompt = `Crie um material de estudo completo sobre "${topic}"${subject ? ` (matéria: ${subject})` : ''} voltado para o ENEM.
+    const prompt = `Prepare uma aula completa sobre "${topic}"${subject ? ` (matéria: ${subject})` : ''} para um aluno que vai fazer o ENEM.
+
+Aja como um professor na frente da turma: explique os conceitos passo a passo, use analogias do dia a dia, antecipe dúvidas comuns e as responda dentro do texto. Não apenas defina — ensine.
 
 Retorne exatamente este JSON (sem texto fora dele):
 {
   "title": "nome do tópico formatado",
-  "intro": "Introdução em 2-3 frases que explica o conceito de forma simples e direta.",
+  "intro": "Abertura da aula em 2-3 frases que desperta a curiosidade e situa o aluno no tema, como um professor que começa explicando por que aquilo importa.",
   "keyPoints": [
-    "Ponto essencial 1 que o aluno deve memorizar",
-    "Ponto essencial 2",
-    "Ponto essencial 3",
-    "Ponto essencial 4",
-    "Ponto essencial 5"
+    "Ideia central 1 que o aluno deve gravar (explique brevemente, não só nomeie)",
+    "Ideia central 2",
+    "Ideia central 3",
+    "Ideia central 4",
+    "Ideia central 5"
   ],
   "sections": [
     {
-      "title": "Título da seção principal (ex: Como funciona, Conceitos fundamentais, Regras principais)",
-      "content": "Conteúdo educacional detalhado. Explique as regras, fórmulas, conceitos. Mínimo de 150 palavras. Use linguagem clara e didática. Separe parágrafos com linha em branco."
+      "title": "Título da primeira parte da aula (ex: Como funciona na prática, Entendendo os conceitos, O que você precisa saber)",
+      "content": "Explicação aprofundada como um professor ensinando: use analogias, exemplos concretos, quebre o conceito em partes simples. Mínimo de 200 palavras. Separe parágrafos com linha em branco."
     },
     {
-      "title": "Título da segunda seção (ex: Tipos e classificações, Aplicações, Exemplos)",
-      "content": "Mais conteúdo detalhado com exemplos e explicações práticas. Mínimo de 100 palavras."
+      "title": "Título da segunda parte (ex: Exemplos e aplicações, Por que isso acontece, Como resolver na prova)",
+      "content": "Continue a aula com exemplos práticos, raciocínio passo a passo, e conexões com o mundo real. Mínimo de 150 palavras."
     }
   ],
-  "enemContext": "Explique especificamente como o ENEM aborda este tema: quais aspectos mais cobrados, interdisciplinaridade, tipos de questão, contexto social/histórico/científico que costuma aparecer.",
+  "enemContext": "Como professor, explique o que o ENEM realmente cobra neste tema: aspectos mais frequentes, como as questões são formuladas, quais armadilhas os alunos costumam cair, e o contexto (social, histórico, científico) que costuma aparecer.",
   "studyTips": [
-    "Dica prática de estudo 1",
-    "Dica prática de estudo 2",
-    "Dica de memorização ou revisão"
+    "Dica prática de fixação do conteúdo",
+    "Como revisar este tema de forma eficiente",
+    "Técnica de memorização ou conexão com outros temas"
   ],
-  "example": "Um exemplo prático, fórmula com explicação, ou descrição de uma questão típica do ENEM sobre este tema com a abordagem de resolução."
+  "example": "Um exemplo real de como este tema aparece no ENEM: descreva a situação-problema típica, o raciocínio necessário para resolver e a resposta. Se houver fórmula, explique cada parte dela."
 }`
 
     const result = await model.generateContent(prompt)
