@@ -175,6 +175,16 @@ export default function SimuladoPage() {
           </button>
         </div>
 
+        {/* Nota sobre TRI */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 mb-6 flex gap-3">
+          <div className="text-slate-500 shrink-0 mt-0.5">ℹ</div>
+          <div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              <span className="text-slate-300 font-medium">Sobre a pontuação TRI:</span> A nota exibida usa ponderação por dificuldade (fácil=0,8×, médio=1,0×, difícil=1,3×), inspirada na TRI do ENEM real. Em simulados curtos (5–20 questões), a precisão é menor que no ENEM oficial com 45 questões por área. Use como referência de desempenho relativo, não como previsão exata da sua nota.
+            </p>
+          </div>
+        </div>
+
         {/* Histórico */}
         {sessions.length > 0 && (
           <div>

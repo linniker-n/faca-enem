@@ -88,7 +88,8 @@ export default function FlashcardsPage() {
     saveCards(cards.filter((c) => c.id !== id))
   }
 
-  const dueCards = cards.filter(isDueToday)
+  const validCards = cards.filter((c) => c.front?.trim() && c.back?.trim())
+  const dueCards = validCards.filter(isDueToday)
   const selectedSubject = SUBJECTS.find((s) => s.id === subjectId)!
 
   if (!loaded) {
@@ -308,10 +309,10 @@ export default function FlashcardsPage() {
       {/* Stats + ações */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Total', value: cards.length, color: 'text-white' },
+          { label: 'Total', value: validCards.length, color: 'text-white' },
           { label: 'Para revisar hoje', value: dueCards.length, color: 'text-blue-400' },
-          { label: 'Revisados', value: cards.filter((c) => c.repetitions > 0).length, color: 'text-emerald-400' },
-          { label: 'Intervalo médio', value: cards.length > 0 ? Math.round(cards.reduce((s, c) => s + c.interval, 0) / cards.length) + 'd' : '0d', color: 'text-violet-400' },
+          { label: 'Revisados', value: validCards.filter((c) => c.repetitions > 0).length, color: 'text-emerald-400' },
+          { label: 'Intervalo médio', value: validCards.length > 0 ? Math.round(validCards.reduce((s, c) => s + c.interval, 0) / validCards.length) + 'd' : '0d', color: 'text-violet-400' },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
             <p className={`text-2xl font-bold ${color}`}>{value}</p>
@@ -340,14 +341,14 @@ export default function FlashcardsPage() {
 
       {/* Lista por matéria */}
       <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wide mb-3">Todos os flashcards</h2>
-      {cards.length === 0 ? (
+      {validCards.length === 0 ? (
         <div className="text-center py-12">
           <CreditCard size={40} className="text-slate-700 mx-auto mb-3" />
           <p className="text-slate-400">Nenhum flashcard ainda.</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {cards.map((card) => {
+          {validCards.map((card) => {
             const subject = SUBJECTS.find((s) => s.id === card.subjectId)
             const due = isDueToday(card)
             return (

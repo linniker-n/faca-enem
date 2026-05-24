@@ -25,9 +25,40 @@ interface WikiContent {
   pageUrl: string
 }
 
+interface AIContent {
+  title: string
+  intro: string
+  keyPoints: string[]
+  sections: { title: string; content: string }[]
+  enemContext: string
+  studyTips: string[]
+  example: string
+}
+
 // ── Cache de vídeos no localStorage (24h) ──────────────────────
 const YT_CACHE_KEY = 'facenem:yt_cache'
 const YT_TTL = 24 * 60 * 60 * 1000
+
+// ── Cache de conteúdo IA no localStorage (7 dias) ──────────────
+const AI_CACHE_KEY = 'facenem:ai_cache'
+const AI_TTL = 7 * 24 * 60 * 60 * 1000
+
+function getAICache(key: string): AIContent | null {
+  try {
+    const cache = JSON.parse(localStorage.getItem(AI_CACHE_KEY) ?? '{}')
+    const entry = cache[key]
+    if (entry && Date.now() - entry.at < AI_TTL) return entry.content
+  } catch {}
+  return null
+}
+
+function setAICache(key: string, content: AIContent) {
+  try {
+    const cache = JSON.parse(localStorage.getItem(AI_CACHE_KEY) ?? '{}')
+    cache[key] = { content, at: Date.now() }
+    localStorage.setItem(AI_CACHE_KEY, JSON.stringify(cache))
+  } catch {}
+}
 
 function getCachedVideos(query: string): YTVideo[] | null {
   try {
@@ -61,7 +92,12 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const targetMinutes = content?.estimatedMinutes ?? 20
 
-  // Wikipedia
+  // Conteúdo IA (Gemini) — primário
+  const [aiContent, setAiContent] = useState<AIContent | null>(null)
+  const [aiLoading, setAiLoading] = useState(true)
+  const [wikiAsFallback, setWikiAsFallback] = useState(false)
+
+  // Wikipedia — fallback quando IA indisponível
   const [wiki, setWiki] = useState<WikiContent | null>(null)
   const [wikiIdx, setWikiIdx] = useState(0)
   const [wikiLoading, setWikiLoading] = useState(false)
@@ -82,7 +118,35 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
   const [showExplanation, setShowExplanation] = useState(false)
   const [quizDone, setQuizDone] = useState(false)
 
-  // ── Busca Wikipedia ───────────────────────────────────────────
+  // ── Busca conteúdo via Gemini (primário) ─────────────────────
+  const fetchAIContent = useCallback(async () => {
+    if (!topic) return
+    const cached = getAICache(topico)
+    if (cached) { setAiContent(cached); setAiLoading(false); return }
+
+    setAiLoading(true)
+    try {
+      const res = await fetch(
+        `/api/conteudo?topic=${encodeURIComponent(topic.name)}&subject=${encodeURIComponent(subject?.name ?? '')}`
+      )
+      if (res.status === 503) { setWikiAsFallback(true); return }
+      const data = await res.json()
+      if (data.content) {
+        setAiContent(data.content)
+        setAICache(topico, data.content)
+      } else {
+        setWikiAsFallback(true)
+      }
+    } catch {
+      setWikiAsFallback(true)
+    } finally {
+      setAiLoading(false)
+    }
+  }, [topic, subject, topico])
+
+  useEffect(() => { fetchAIContent() }, [fetchAIContent])
+
+  // ── Busca Wikipedia (fallback quando IA indisponível) ─────────
   const fetchWiki = useCallback(async (idx: number) => {
     if (!content?.wikipedia.length) return
     const titles = content.wikipedia
@@ -99,7 +163,7 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
     setWikiLoading(false)
   }, [content])
 
-  useEffect(() => { fetchWiki(0) }, [fetchWiki])
+  useEffect(() => { if (wikiAsFallback) fetchWiki(0) }, [wikiAsFallback, fetchWiki])
 
   // ── Busca YouTube via API route (com cache) ───────────────────
   const fetchVideos = useCallback(async () => {
@@ -268,72 +332,135 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
         {/* ARTIGO */}
         {activeTab === 'artigo' && (
           <div className="p-6 max-w-3xl mx-auto">
-            {wikiLoading && (
-              <div className="flex items-center gap-3 py-12 justify-center">
-                <Loader2 size={20} className="animate-spin text-violet-400" />
-                <span className="text-slate-400 text-sm">Carregando artigo...</span>
+
+            {/* ── Carregando IA ───────────────────────────────── */}
+            {aiLoading && (
+              <div className="flex flex-col items-center gap-3 py-16 justify-center">
+                <Loader2 size={24} className="animate-spin text-violet-400" />
+                <p className="text-slate-400 text-sm">Gerando material de estudo com IA...</p>
               </div>
             )}
-            {wikiError && (
-              <div className="text-center py-12">
-                <AlertCircle size={32} className="text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-400 text-sm">Artigo não encontrado na Wikipedia.</p>
-                <a href={`https://pt.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(topic.name)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="text-violet-400 hover:underline text-sm mt-2 inline-flex items-center gap-1">
-                  Buscar na Wikipedia <ExternalLink size={12} />
-                </a>
-              </div>
-            )}
-            {wiki && !wikiLoading && (
+
+            {/* ── Conteúdo gerado por Gemini ──────────────────── */}
+            {!aiLoading && aiContent && (
               <article className="fade-in space-y-5">
-                {wiki.thumbnail && (
-                  <img src={wiki.thumbnail} alt={wiki.title} className="w-full max-h-52 object-cover rounded-xl" />
-                )}
                 <div className="flex items-start justify-between">
-                  <h2 className="text-xl font-bold text-white leading-snug">{wiki.title}</h2>
-                  <a href={wiki.pageUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition shrink-0 ml-3 mt-1">
-                    Wikipedia <ExternalLink size={11} />
-                  </a>
+                  <h2 className="text-xl font-bold text-white leading-snug">{aiContent.title}</h2>
+                  <span className="text-xs bg-violet-500/20 text-violet-400 border border-violet-500/30 px-2.5 py-1 rounded-full shrink-0 ml-3 mt-0.5">✦ IA</span>
                 </div>
 
                 {/* Introdução */}
-                <p className="text-slate-300 leading-relaxed text-sm">{wiki.extract}</p>
+                <p className="text-slate-300 text-sm leading-relaxed">{aiContent.intro}</p>
 
-                {/* Seções educacionais */}
-                {wiki.sections.map((section, i) => (
+                {/* Pontos essenciais */}
+                <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4">
+                  <h3 className="text-sm font-semibold text-white mb-3">Pontos Essenciais para o ENEM</h3>
+                  <ul className="space-y-2">
+                    {aiContent.keyPoints.map((point, i) => (
+                      <li key={i} className="flex gap-2 text-sm text-slate-300">
+                        <span className="text-violet-400 font-bold shrink-0">{i + 1}.</span>
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Seções de conteúdo */}
+                {aiContent.sections.map((section, i) => (
                   <div key={i} className="border-t border-slate-800 pt-4">
-                    <h3 className="text-sm font-semibold text-white mb-2">{section.title}</h3>
+                    <h3 className="text-sm font-semibold text-white mb-3">{section.title}</h3>
                     <div className="space-y-2">
-                      {section.content.split('\n\n').filter((p) => p.trim().length > 0).map((paragraph, j) => (
-                        <p key={j} className="text-slate-300 leading-relaxed text-sm">{paragraph.trim()}</p>
+                      {section.content.split('\n\n').filter((p) => p.trim()).map((p, j) => (
+                        <p key={j} className="text-slate-300 text-sm leading-relaxed">{p.trim()}</p>
                       ))}
                     </div>
                   </div>
                 ))}
 
-                {/* Nav artigos relacionados */}
-                {content && content.wikipedia.length > 1 && (
-                  <div className="pt-4 border-t border-slate-800">
-                    <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Outros artigos deste tópico</p>
-                    <div className="flex flex-wrap gap-2">
-                      {content.wikipedia.filter((_, i) => i !== wikiIdx).map((title) => (
-                        <button key={title} onClick={() => { const i = content.wikipedia.indexOf(title); setWikiIdx(i); fetchWiki(i) }}
-                          className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full text-slate-300 transition">
-                          {title}
-                        </button>
-                      ))}
-                    </div>
+                {/* No ENEM */}
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                  <h3 className="text-sm font-semibold text-amber-400 mb-2">Como cai no ENEM</h3>
+                  <p className="text-sm text-slate-300 leading-relaxed">{aiContent.enemContext}</p>
+                </div>
+
+                {/* Exemplo */}
+                {aiContent.example && (
+                  <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+                    <h3 className="text-sm font-semibold text-white mb-2">Exemplo Prático</h3>
+                    <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">{aiContent.example}</p>
                   </div>
                 )}
 
-                {/* Dica de estudo */}
+                {/* Dicas de estudo */}
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
+                  <h3 className="text-sm font-semibold text-emerald-400 mb-2">Dicas de Estudo</h3>
+                  <ul className="space-y-1.5">
+                    {aiContent.studyTips.map((tip, i) => (
+                      <li key={i} className="flex gap-2 text-sm text-slate-300">
+                        <span className="text-emerald-400 shrink-0">→</span>{tip}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Recuperação ativa */}
                 <div className="bg-violet-500/10 border border-violet-500/20 rounded-xl p-4">
                   <p className="text-xs text-violet-300 font-medium mb-1">Recuperação Ativa</p>
-                  <p className="text-xs text-slate-400">Após ler, feche os olhos e resuma o conteúdo. Depois, teste na aba <strong className="text-slate-300">Quiz</strong>.</p>
+                  <p className="text-xs text-slate-400">Após ler, feche os olhos e resuma o conteúdo em voz alta. Depois teste na aba <strong className="text-slate-300">Quiz</strong>.</p>
                 </div>
               </article>
+            )}
+
+            {/* ── Fallback Wikipedia ──────────────────────────── */}
+            {!aiLoading && !aiContent && (
+              <>
+                {wikiLoading && (
+                  <div className="flex items-center gap-3 py-12 justify-center">
+                    <Loader2 size={20} className="animate-spin text-slate-500" />
+                    <span className="text-slate-400 text-sm">Carregando artigo...</span>
+                  </div>
+                )}
+                {wikiError && (
+                  <div className="text-center py-12">
+                    <AlertCircle size={32} className="text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-400 text-sm">Conteúdo não encontrado.</p>
+                    <a href={`https://pt.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(topic.name)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="text-violet-400 hover:underline text-sm mt-2 inline-flex items-center gap-1">
+                      Buscar na Wikipedia <ExternalLink size={12} />
+                    </a>
+                  </div>
+                )}
+                {wiki && !wikiLoading && (
+                  <article className="fade-in space-y-5">
+                    {wiki.thumbnail && (
+                      <img src={wiki.thumbnail} alt={wiki.title} className="w-full max-h-52 object-cover rounded-xl" />
+                    )}
+                    <div className="flex items-start justify-between">
+                      <h2 className="text-xl font-bold text-white leading-snug">{wiki.title}</h2>
+                      <a href={wiki.pageUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition shrink-0 ml-3 mt-1">
+                        Wikipedia <ExternalLink size={11} />
+                      </a>
+                    </div>
+                    <p className="text-slate-300 leading-relaxed text-sm">{wiki.extract}</p>
+                    {wiki.sections.map((section, i) => (
+                      <div key={i} className="border-t border-slate-800 pt-4">
+                        <h3 className="text-sm font-semibold text-white mb-2">{section.title}</h3>
+                        <div className="space-y-2">
+                          {section.content.split('\n\n').filter((p) => p.trim()).map((p, j) => (
+                            <p key={j} className="text-slate-300 text-sm leading-relaxed">{p.trim()}</p>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="bg-violet-500/10 border border-violet-500/20 rounded-xl p-4">
+                      <p className="text-xs text-violet-300 font-medium mb-1">Recuperação Ativa</p>
+                      <p className="text-xs text-slate-400">Após ler, feche os olhos e resuma o conteúdo. Depois, teste na aba <strong className="text-slate-300">Quiz</strong>.</p>
+                    </div>
+                  </article>
+                )}
+              </>
             )}
           </div>
         )}
