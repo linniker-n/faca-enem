@@ -8,7 +8,7 @@ Não defina — ensine. Não liste — explique. O aluno deve sair da sua aula e
 Use linguagem direta, clara e envolvente, como um professor que quer que o aluno aprenda de verdade.
 Retorne APENAS JSON válido, sem markdown, sem texto fora do JSON.`
 
-const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent'
+const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 
 export async function GET(req: NextRequest) {
   const topic = req.nextUrl.searchParams.get('topic')
