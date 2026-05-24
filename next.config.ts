@@ -1,7 +1,10 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  // Required for Cloudflare Pages edge runtime
+  experimental: {
+    // no extra flags needed
+  },
+}
 
-export default nextConfig;
+export default nextConfig

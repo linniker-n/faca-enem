@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server'
 
+export const runtime = 'edge'
+
 export interface YTVideo {
   id: string
   title: string
@@ -37,7 +39,7 @@ export async function GET(req: NextRequest) {
     url.searchParams.set('regionCode', 'BR')
     url.searchParams.set('safeSearch', 'strict')
 
-    const res = await fetch(url.toString(), { next: { revalidate: 60 * 60 * 24 } }) // cache 24h no server
+    const res = await fetch(url.toString())
     if (!res.ok) {
       const err = await res.json()
       return Response.json({ videos: [], error: err?.error?.message ?? 'Erro YouTube API' }, { status: res.status })

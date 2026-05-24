@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextRequest } from 'next/server'
 
+export const runtime = 'edge'
+
 const SYSTEM_PROMPT = `Você é um corretor especializado em redações do ENEM. Avalie a redação com base nas 5 competências oficiais e retorne APENAS um JSON válido (sem markdown, sem texto fora do JSON) com o seguinte formato:
 
 {
