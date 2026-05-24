@@ -20,6 +20,7 @@ type QuizPhase = 'idle' | 'running' | 'done'
 interface WikiContent {
   title: string
   extract: string
+  sections: { title: string; content: string }[]
   thumbnail?: string
   pageUrl: string
 }
@@ -285,21 +286,37 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
               </div>
             )}
             {wiki && !wikiLoading && (
-              <div className="fade-in">
+              <article className="fade-in space-y-5">
                 {wiki.thumbnail && (
-                  <img src={wiki.thumbnail} alt={wiki.title} className="w-full max-h-52 object-cover rounded-xl mb-5" />
+                  <img src={wiki.thumbnail} alt={wiki.title} className="w-full max-h-52 object-cover rounded-xl" />
                 )}
-                <div className="flex items-start justify-between mb-4">
-                  <h2 className="text-xl font-bold text-white">{wiki.title}</h2>
+                <div className="flex items-start justify-between">
+                  <h2 className="text-xl font-bold text-white leading-snug">{wiki.title}</h2>
                   <a href={wiki.pageUrl} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition shrink-0 ml-3 mt-1">
                     Wikipedia <ExternalLink size={11} />
                   </a>
                 </div>
+
+                {/* Introdução */}
                 <p className="text-slate-300 leading-relaxed text-sm">{wiki.extract}</p>
+
+                {/* Seções educacionais */}
+                {wiki.sections.map((section, i) => (
+                  <div key={i} className="border-t border-slate-800 pt-4">
+                    <h3 className="text-sm font-semibold text-white mb-2">{section.title}</h3>
+                    <div className="space-y-2">
+                      {section.content.split('\n\n').filter((p) => p.trim().length > 0).map((paragraph, j) => (
+                        <p key={j} className="text-slate-300 leading-relaxed text-sm">{paragraph.trim()}</p>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Nav artigos relacionados */}
                 {content && content.wikipedia.length > 1 && (
-                  <div className="mt-6 pt-5 border-t border-slate-800">
-                    <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Outros artigos</p>
+                  <div className="pt-4 border-t border-slate-800">
+                    <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Outros artigos deste tópico</p>
                     <div className="flex flex-wrap gap-2">
                       {content.wikipedia.filter((_, i) => i !== wikiIdx).map((title) => (
                         <button key={title} onClick={() => { const i = content.wikipedia.indexOf(title); setWikiIdx(i); fetchWiki(i) }}
@@ -310,11 +327,13 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
                     </div>
                   </div>
                 )}
-                <div className="mt-6 bg-violet-500/10 border border-violet-500/20 rounded-xl p-4">
+
+                {/* Dica de estudo */}
+                <div className="bg-violet-500/10 border border-violet-500/20 rounded-xl p-4">
                   <p className="text-xs text-violet-300 font-medium mb-1">Recuperação Ativa</p>
                   <p className="text-xs text-slate-400">Após ler, feche os olhos e resuma o conteúdo. Depois, teste na aba <strong className="text-slate-300">Quiz</strong>.</p>
                 </div>
-              </div>
+              </article>
             )}
           </div>
         )}

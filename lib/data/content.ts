@@ -533,26 +533,62 @@ export function getTopicContent(topicId: string): TopicContent | null {
   return TOPIC_CONTENT[topicId] ?? null
 }
 
-// Busca resumo do artigo na Wikipedia PT (API pública, sem chave, CORS-friendly)
+function stripWikiHtml(html: string): string {
+  return html
+    .replace(/<sup[^>]*>[\s\S]*?<\/sup>/gi, '')
+    .replace(/<figure[^>]*>[\s\S]*?<\/figure>/gi, '')
+    .replace(/<table[^>]*>[\s\S]*?<\/table>/gi, '')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ').replace(/&#160;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+// Busca artigo completo da Wikipedia PT com seções educacionais
 export async function fetchWikipediaSummary(articleTitle: string): Promise<{
   title: string
   extract: string
+  sections: { title: string; content: string }[]
   thumbnail?: string
   pageUrl: string
 } | null> {
   try {
     const encoded = encodeURIComponent(articleTitle)
-    const res = await fetch(
-      `https://pt.wikipedia.org/api/rest_v1/page/summary/${encoded}`,
-      { headers: { 'Accept': 'application/json' } }
-    )
-    if (!res.ok) return null
-    const data = await res.json()
+    const [summaryRes, sectionsRes] = await Promise.all([
+      fetch(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encoded}`, {
+        headers: { Accept: 'application/json' },
+      }),
+      fetch(`https://pt.wikipedia.org/api/rest_v1/page/mobile-sections/${encoded}`, {
+        headers: { Accept: 'application/json' },
+      }),
+    ])
+
+    if (!summaryRes.ok) return null
+    const summary = await summaryRes.json()
+
+    let sections: { title: string; content: string }[] = []
+    if (sectionsRes.ok) {
+      const data = await sectionsRes.json()
+      const raw: { line?: string; text?: string }[] = data.remaining?.sections ?? []
+      sections = raw
+        .filter((s) => s.line && s.text && stripWikiHtml(s.text).length > 60)
+        .slice(0, 6)
+        .map((s) => ({
+          title: s.line!,
+          content: stripWikiHtml(s.text!),
+        }))
+    }
+
     return {
-      title: data.title,
-      extract: data.extract,
-      thumbnail: data.thumbnail?.source,
-      pageUrl: data.content_urls?.desktop?.page ?? `https://pt.wikipedia.org/wiki/${encoded}`,
+      title: summary.title,
+      extract: summary.extract ?? '',
+      sections,
+      thumbnail: summary.thumbnail?.source,
+      pageUrl: summary.content_urls?.desktop?.page ?? `https://pt.wikipedia.org/wiki/${encoded}`,
     }
   } catch {
     return null
