@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
@@ -27,6 +26,8 @@ Pontuação por competência: 0, 40, 80, 120, 160 ou 200 pontos.
 Nota máxima total: 1000 pontos.
 Seja criterioso, justo e didático. O feedback deve ser específico e útil para o estudante melhorar.`
 
+const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+
 export async function POST(req: NextRequest) {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
@@ -35,9 +36,9 @@ export async function POST(req: NextRequest) {
 
   let theme: string, text: string
   try {
-    const body = await req.json()
-    theme = body.theme
-    text = body.text
+    const body = await req.json() as { theme?: string; text?: string }
+    theme = body.theme ?? ''
+    text = body.text ?? ''
   } catch {
     return Response.json({ error: 'Body inválido' }, { status: 400 })
   }
@@ -47,25 +48,39 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      systemInstruction: SYSTEM_PROMPT,
+    const res = await fetch(`${GEMINI_API}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: [{
+          role: 'user',
+          parts: [{ text: `**Tema da Redação:** ${theme}\n\n**Texto do Aluno:**\n${text}` }],
+        }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
+      }),
     })
 
-    const result = await model.generateContent(
-      `**Tema da Redação:** ${theme}\n\n**Texto do Aluno:**\n${text}`
-    )
-    const raw = result.response.text()
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}))
+      const msg = (errBody as { error?: { message?: string } }).error?.message ?? `HTTP ${res.status}`
+      return Response.json({ error: `Gemini: ${msg}` }, { status: 500 })
+    }
+
+    type GeminiResponse = {
+      candidates?: { content?: { parts?: { text?: string }[] } }[]
+    }
+    const json = (await res.json()) as GeminiResponse
+    const raw = json.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
 
     const jsonMatch = raw.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
       return Response.json({ error: 'Resposta inválida da IA' }, { status: 500 })
     }
 
-    const feedback = JSON.parse(jsonMatch[0])
+    const feedback = JSON.parse(jsonMatch[0]) as Record<string, unknown>
     feedback.evaluatedAt = new Date().toISOString()
-    feedback.model = 'gemini-1.5-flash'
+    feedback.model = 'gemini-2.0-flash'
 
     return Response.json({ feedback })
   } catch (err: unknown) {
