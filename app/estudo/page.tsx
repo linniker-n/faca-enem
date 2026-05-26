@@ -8,7 +8,7 @@ import {
   AlertCircle, CheckCircle, Sparkles, Search,
 } from 'lucide-react'
 import { storage } from '@/lib/storage'
-import { generateStudyPlan, REASON_LABELS } from '@/lib/study-plan'
+import { getTodayStudyPlan, regenerateStudyPlan, REASON_LABELS } from '@/lib/study-plan'
 import { AREA_LABELS, SUBJECTS } from '@/lib/data/subjects'
 import type { StudyPlan } from '@/lib/study-plan'
 import type { UserProgress } from '@/lib/types'
@@ -29,7 +29,10 @@ export default function EstudoPage() {
   const [customSubject, setCustomSubject] = useState('')
 
   function loadPlan(p: UserProgress) {
-    setPlan(generateStudyPlan(p, 6))
+    // Usa o novo sistema que persiste o plano do dia
+    const items = getTodayStudyPlan(p)
+    const totalMinutes = items.reduce((sum, i) => sum + i.estimatedMinutes, 0)
+    setPlan({ items, totalMinutes, generatedAt: new Date().toISOString() })
   }
 
   useEffect(() => {
@@ -40,7 +43,11 @@ export default function EstudoPage() {
   }, [])
 
   function regenerate() {
-    if (progress) loadPlan(progress)
+    if (progress) {
+      const items = regenerateStudyPlan(progress)
+      const totalMinutes = items.reduce((sum, i) => sum + i.estimatedMinutes, 0)
+      setPlan({ items, totalMinutes, generatedAt: new Date().toISOString() })
+    }
   }
 
   function handleCustomStudy(e: React.FormEvent) {

@@ -6,9 +6,8 @@ import { Flame, CreditCard, ClipboardList, PenLine, RefreshCw, BarChart2, Chevro
 import { storage } from '@/lib/storage'
 import { SUBJECTS, AREA_LABELS, AREA_COLORS } from '@/lib/data/subjects'
 import { isDueToday } from '@/lib/sm2'
-import { generateStudyPlan } from '@/lib/study-plan'
-import type { UserProgress, StudyCycle, Flashcard } from '@/lib/types'
-import type { StudyItem } from '@/lib/study-plan'
+import { getTodayStudyPlan, regenerateStudyPlan } from '@/lib/study-plan'
+import type { UserProgress, StudyCycle, Flashcard, StudyItem } from '@/lib/types'
 
 const AREA_ORDER = ['linguagens', 'humanas', 'natureza', 'matematica']
 
@@ -24,7 +23,8 @@ export default function Dashboard() {
     setProgress(p)
     setCycles(storage.getCycles())
     setFlashcards(storage.getFlashcards())
-    setTodayPlan(generateStudyPlan(p, 3).items)
+    // Usa o novo sistema que persiste o plano do dia
+    setTodayPlan(getTodayStudyPlan(p))
     storage.updateStreak()
     setLoaded(true)
   }, [])
@@ -74,14 +74,40 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold text-white">Bem-vindo de volta!</h1>
           <p className="text-slate-400 mt-1">Vamos continuar sua jornada rumo ao ENEM.</p>
         </div>
-        <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-xl px-4 py-3">
-          <Flame size={20} className="text-orange-400" />
-          <div className="text-right">
-            <p className="text-orange-400 font-bold text-lg leading-none">{progress?.streak ?? 0}</p>
-            <p className="text-slate-500 text-xs">dias seguidos</p>
+        <div className="flex items-center gap-3">
+          {/* Nível e XP */}
+          <div className="flex items-center gap-3 bg-violet-500/10 border border-violet-500/20 rounded-xl px-4 py-3">
+            <div className="text-right">
+              <p className="text-violet-400 font-bold text-lg leading-none">Nível {progress?.level.currentLevel ?? 1}</p>
+              <p className="text-slate-500 text-xs">{progress?.level.totalXP ?? 0} XP</p>
+            </div>
+          </div>
+          {/* Streak */}
+          <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-xl px-4 py-3">
+            <Flame size={20} className="text-orange-400" />
+            <div className="text-right">
+              <p className="text-orange-400 font-bold text-lg leading-none">{progress?.streak ?? 0}</p>
+              <p className="text-slate-500 text-xs">dias seguidos</p>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Barra de progresso de XP */}
+      {progress && (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium text-white">Progresso para o próximo nível</p>
+            <p className="text-xs text-slate-400">{progress.level.xpInCurrentLevel} / {progress.level.xpForNextLevel} XP</p>
+          </div>
+          <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-violet-500 to-violet-400 rounded-full transition-all duration-700"
+              style={{ width: `${(progress.level.xpInCurrentLevel / progress.level.xpForNextLevel) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Plano de estudo de hoje */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-6">
@@ -90,9 +116,23 @@ export default function Dashboard() {
             <Sparkles size={18} className="text-violet-400" />
             <h2 className="font-semibold text-white">Plano de hoje</h2>
           </div>
-          <Link href="/estudo" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1 transition">
-            Ver tudo <ChevronRight size={13} />
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (progress) {
+                  const newPlan = regenerateStudyPlan(progress)
+                  setTodayPlan(newPlan)
+                }
+              }}
+              className="text-xs text-slate-400 hover:text-violet-400 flex items-center gap-1 transition"
+              title="Gerar novo plano"
+            >
+              <RefreshCw size={13} />
+            </button>
+            <Link href="/estudo" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1 transition">
+              Ver tudo <ChevronRight size={13} />
+            </Link>
+          </div>
         </div>
         <div className="space-y-2">
           {todayPlan.map((item) => (

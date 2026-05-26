@@ -2,7 +2,19 @@ import type { Flashcard } from '../types'
 
 function makeCard(id: string, subjectId: string, topicId: string, front: string, back: string): Flashcard {
   const today = new Date().toISOString().split('T')[0]
-  return { id, subjectId, topicId, front, back, easeFactor: 2.5, interval: 0, repetitions: 0, nextReviewDate: today, createdAt: new Date().toISOString() }
+  return {
+    id,
+    userId: 'seed-user',
+    subjectId,
+    topicId,
+    front,
+    back,
+    easeFactor: 2.5,
+    interval: 0,
+    repetitions: 0,
+    nextReviewDate: today,
+    createdAt: new Date().toISOString(),
+  }
 }
 
 export const SEED_FLASHCARDS: Flashcard[] = [

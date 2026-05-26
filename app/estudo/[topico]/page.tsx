@@ -193,8 +193,9 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
   const timerDone = seconds >= targetSeconds
 
   // ── Quiz ──────────────────────────────────────────────────────
+  // Filtra questões apenas do tópico específico, não de toda a matéria
   const topicQuestions = QUESTIONS.filter((q) =>
-    !isCustom && (q.topicId === topico || q.subjectId === subject?.id)
+    !isCustom && q.topicId === topico
   )
 
   function startQuiz() {
@@ -213,8 +214,25 @@ export default function EstudoTopico({ params }: { params: Promise<{ topico: str
 
   function nextQuizQuestion() {
     if (quizIdx + 1 >= quizQuestions.length) {
-      quizQuestions.forEach((q) => storage.recordCorrect(q.subjectId, quizAnswers[q.id] === q.correctIndex))
+      // Calcula XP ganho neste quiz
+      let correctCount = 0
+      quizQuestions.forEach((q) => {
+        const isCorrect = quizAnswers[q.id] === q.correctIndex
+        if (isCorrect) correctCount++
+        // Registra resposta com rastreamento por tópico e XP
+        const xpGained = isCorrect ? 10 : 2 // XP por questão
+        storage.recordCorrect(q.subjectId, q.topicId, isCorrect, xpGained)
+      })
+      
+      // Marca o item do plano como concluído
+      if (!isCustom && topico) {
+        const today = new Date().toISOString().split('T')[0]
+        const itemId = `${topico}-${today}`
+        storage.completeStudyItem(itemId)
+      }
+      
       storage.updateStreak()
+      storage.addStudyTime(Math.floor(seconds / 60))
       setQuizDone(true); setQuizPhase('done')
     } else {
       setQuizIdx((i) => i + 1); setShowExplanation(false)

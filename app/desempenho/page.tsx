@@ -83,6 +83,29 @@ export default function DesempenhoPage() {
         <p className="text-slate-400 text-sm mt-1">Análise completa do seu progresso de estudos</p>
       </div>
 
+      {/* Nivel e XP */}
+      {progress && (
+        <div className="bg-gradient-to-r from-violet-600 to-violet-500 rounded-2xl p-6 mb-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm opacity-90">Nivel atual</p>
+              <p className="text-4xl font-bold mt-1">{progress.level.currentLevel}</p>
+              <p className="text-sm opacity-75 mt-1">{progress.level.totalXP} XP total</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm opacity-90">Proximo nivel</p>
+              <p className="text-2xl font-bold mt-1">{progress.level.xpForNextLevel - progress.level.xpInCurrentLevel} XP</p>
+              <div className="mt-3 w-32 h-2 bg-white/20 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-white transition-all duration-700"
+                  style={{ width: `${(progress.level.xpInCurrentLevel / progress.level.xpForNextLevel) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[

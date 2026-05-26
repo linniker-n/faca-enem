@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { PenLine, Send, ChevronLeft, Star, AlertCircle, CheckCircle, Clock, Lightbulb } from 'lucide-react'
 import { storage } from '@/lib/storage'
+import { calculateLevel } from '@/lib/xp-config'
 import { ESSAY_THEMES } from '@/lib/data/essay-themes'
 import type { Essay, EssayFeedback, CompetencyEval } from '@/lib/types'
 
@@ -97,11 +98,27 @@ export default function RedacaoPage() {
       const feedback = await evaluateWithClaude(text, selectedTheme.title)
       const essay: Essay = {
         id: Math.random().toString(36).slice(2),
+        userId: storage.getCurrentUserId(),
         theme: selectedTheme.title,
         text,
         createdAt: new Date().toISOString(),
         feedback,
       }
+      
+      // Ganha XP por redação submetida
+      const p = storage.getProgress()
+      const essayXP = 75
+      const newTotalXP = p.level.totalXP + essayXP
+      const levelInfo = calculateLevel(newTotalXP)
+      storage.saveProgress({
+        ...p,
+        level: {
+          currentLevel: levelInfo.level,
+          totalXP: newTotalXP,
+          xpForNextLevel: levelInfo.xpForNext,
+          xpInCurrentLevel: levelInfo.xpInCurrent,
+        },
+      })
       const updated = [essay, ...essays]
       setEssays(updated)
       storage.saveEssays(updated)

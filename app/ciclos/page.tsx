@@ -48,6 +48,7 @@ export default function CiclosPage() {
     if (!cycleName.trim() || selected.length === 0) return
     const cycle: StudyCycle = {
       id: genId(),
+      userId: storage.getCurrentUserId(),
       name: cycleName.trim(),
       subjects: selected,
       createdAt: new Date().toISOString(),

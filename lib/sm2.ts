@@ -36,10 +36,13 @@ export function isDueToday(card: Flashcard): boolean {
   return card.nextReviewDate <= today
 }
 
-export function newCard(partial: Omit<Flashcard, 'easeFactor' | 'interval' | 'repetitions' | 'nextReviewDate' | 'createdAt'>): Flashcard {
+import { storage } from './storage'
+
+export function newCard(partial: Omit<Flashcard, 'easeFactor' | 'interval' | 'repetitions' | 'nextReviewDate' | 'createdAt' | 'userId'>): Flashcard {
   const today = new Date().toISOString().split('T')[0]
   return {
     ...partial,
+    userId: storage.getCurrentUserId(),
     easeFactor: 2.5,
     interval: 0,
     repetitions: 0,

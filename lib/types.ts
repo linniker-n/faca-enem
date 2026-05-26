@@ -15,23 +15,94 @@ export interface Subject {
   topics: Topic[]
 }
 
+/**
+ * Sistema de Níveis do Aluno
+ * - XP é acumulado por atividades (questões corretas, sessões concluídas, etc)
+ * - Nível é calculado a partir do XP total
+ * - Cada nível requer progressivamente mais XP
+ */
+export interface UserLevel {
+  currentLevel: number
+  totalXP: number
+  xpForNextLevel: number // XP necessário para atingir o próximo nível
+  xpInCurrentLevel: number // XP acumulado no nível atual
+}
+
+/**
+ * Progresso por tópico específico
+ * Rastreia desempenho granular para cada tópico, não apenas por matéria
+ */
+export interface TopicProgress {
+  topicId: string
+  completedCount: number // Quantas vezes o tópico foi estudado
+  correctAnswers: number
+  totalAnswers: number
+  lastStudied: string | null
+  averageAccuracy: number // Acurácia média neste tópico
+}
+
+/**
+ * Progresso por matéria
+ * Agregação de todos os tópicos da matéria
+ */
+export interface SubjectProgress {
+  completedTopics: string[] // IDs dos tópicos concluídos
+  correctAnswers: number
+  totalAnswers: number
+  lastStudied: string | null
+  topicProgress: Record<string, TopicProgress> // Progresso granular por tópico
+}
+
+/**
+ * Plano de estudo de um dia específico
+ * Persistido para garantir consistência durante o dia
+ */
+export interface DailyStudyPlan {
+  date: string // ISO date (YYYY-MM-DD)
+  items: StudyItem[]
+  totalMinutes: number
+  generatedAt: string
+  completedItems: string[] // IDs dos itens completados
+}
+
+/**
+ * Item individual do plano de estudo
+ */
+export interface StudyItem {
+  id: string // Identificador único para rastrear conclusão
+  topicId: string
+  subjectId: string
+  subjectName: string
+  topicName: string
+  subjectColor: string
+  estimatedMinutes: number
+  reason: 'novo' | 'fraco' | 'reforco' | 'revisao'
+  accuracyPct: number | null
+  hasContent: boolean
+  hasQuestions: boolean
+  completedAt?: string // Timestamp quando foi concluído
+}
+
+/**
+ * Progresso geral do usuário
+ * Agora com suporte a múltiplos usuários via userId
+ */
 export interface UserProgress {
+  userId: string // Identificador único do usuário
   streak: number
   lastStudyDate: string | null
   totalStudyMinutes: number
   subjectProgress: Record<string, SubjectProgress>
   completedSessions: number
-}
-
-export interface SubjectProgress {
-  completedTopics: string[]
-  correctAnswers: number
-  totalAnswers: number
-  lastStudied: string | null
+  level: UserLevel
+  dailyStudyPlan: DailyStudyPlan | null // Plano do dia atual, persistido
+  createdAt: string
+  updatedAt: string
 }
 
 export interface StudyCycle {
   id: string
+  userId: string // Suporte a múltiplos usuários
   name: string
   subjects: CycleSubjectConfig[]
   createdAt: string
@@ -47,6 +118,7 @@ export interface CycleSubjectConfig {
 
 export interface Flashcard {
   id: string
+  userId: string // Suporte a múltiplos usuários
   front: string
   back: string
   subjectId: string
@@ -58,6 +130,9 @@ export interface Flashcard {
   createdAt: string
 }
 
+/**
+ * Questão com suporte a múltiplas bancas e anos
+ */
 export interface Question {
   id: string
   text: string
@@ -68,10 +143,13 @@ export interface Question {
   topicId: string
   year?: number
   difficulty: 'easy' | 'medium' | 'hard'
+  source?: 'enem' | 'fuvest' | 'unicamp' | 'usp' | 'puc' | 'ita' | 'ime' | 'ufmg' | 'ufba' | 'other'
+  sourceYear?: number // Ano da prova específica
 }
 
 export interface SimuladoSession {
   id: string
+  userId: string // Suporte a múltiplos usuários
   type: 'full' | 'area' | 'topico'
   areaFilter?: Area
   subjectFilter?: string
@@ -82,10 +160,12 @@ export interface SimuladoSession {
   score?: number
   triScore?: number
   correctCount?: number
+  xpEarned?: number // XP ganho neste simulado
 }
 
 export interface Essay {
   id: string
+  userId: string // Suporte a múltiplos usuários
   theme: string
   text: string
   createdAt: string
@@ -107,4 +187,26 @@ export interface EssayFeedback {
   strengths: string[]
   improvements: string[]
   evaluatedAt: string
+}
+
+/**
+ * Configuração de XP para diferentes atividades
+ */
+export interface XPConfig {
+  questionCorrect: number // XP por questão correta
+  questionIncorrect: number // XP por questão incorreta (menor)
+  sessionCompleted: number // XP por sessão concluída
+  topicCompleted: number // XP por tópico concluído
+  simuladoCompleted: number // XP por simulado concluído
+  essaySubmitted: number // XP por redação submetida
+}
+
+/**
+ * Configuração de níveis
+ * Define quantos XP são necessários para cada nível
+ */
+export interface LevelConfig {
+  level: number
+  requiredXP: number // XP total necessário para atingir este nível
+  title: string // Nome do nível (ex: "Iniciante", "Intermediário", etc)
 }

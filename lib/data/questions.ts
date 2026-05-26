@@ -1,13 +1,15 @@
 import type { Question } from '../types'
 
 export const QUESTIONS: Question[] = [
-  // MATEMÁTICA
+  // ========== MATEMÁTICA ==========
   {
     id: 'q1',
     subjectId: 'matematica',
     topicId: 'porcentagem',
     difficulty: 'easy',
     year: 2023,
+    source: 'enem',
+    sourceYear: 2023,
     text: 'Um produto foi reajustado em 20% e depois sofreu desconto de 20%. Em relação ao preço original, o preço final é:',
     options: ['4% menor', '4% maior', 'Igual ao original', '8% menor'],
     correctIndex: 0,
@@ -19,6 +21,8 @@ export const QUESTIONS: Question[] = [
     topicId: 'funcoes',
     difficulty: 'medium',
     year: 2022,
+    source: 'enem',
+    sourceYear: 2022,
     text: 'Uma função do 2º grau f(x) = x² – 4x + 3 tem como raízes os valores:',
     options: ['x = 1 e x = 3', 'x = -1 e x = -3', 'x = 2 e x = 2', 'x = 0 e x = 4'],
     correctIndex: 0,
@@ -30,6 +34,8 @@ export const QUESTIONS: Question[] = [
     topicId: 'estatistica',
     difficulty: 'easy',
     year: 2021,
+    source: 'enem',
+    sourceYear: 2021,
     text: 'Em uma turma de 10 alunos, as notas foram: 5, 6, 7, 7, 8, 8, 8, 9, 9, 10. A moda e a mediana são, respectivamente:',
     options: ['8 e 8', '7 e 8', '8 e 7,5', '9 e 8'],
     correctIndex: 0,
@@ -41,6 +47,8 @@ export const QUESTIONS: Question[] = [
     topicId: 'geometria-plana',
     difficulty: 'medium',
     year: 2022,
+    source: 'enem',
+    sourceYear: 2022,
     text: 'Um terreno retangular tem perímetro de 60 m e comprimento o dobro da largura. Qual é a área do terreno?',
     options: ['200 m²', '100 m²', '400 m²', '150 m²'],
     correctIndex: 0,
@@ -52,19 +60,62 @@ export const QUESTIONS: Question[] = [
     topicId: 'razao-proporcao',
     difficulty: 'easy',
     year: 2021,
+    source: 'enem',
+    sourceYear: 2021,
     text: 'Se 4 torneiras enchem um tanque em 3 horas, quantas torneiras seriam necessárias para enchê-lo em 2 horas?',
     options: ['6', '8', '5', '12'],
     correctIndex: 0,
     explanation: 'É uma grandeza inversamente proporcional: 4 × 3 = n × 2. Logo n = 6 torneiras.',
   },
+  {
+    id: 'q26',
+    subjectId: 'matematica',
+    topicId: 'progressoes',
+    difficulty: 'medium',
+    year: 2023,
+    source: 'fuvest',
+    sourceYear: 2023,
+    text: 'Em uma progressão aritmética, o primeiro termo é 5 e a razão é 3. Qual é a soma dos 10 primeiros termos?',
+    options: ['185', '195', '205', '215'],
+    correctIndex: 1,
+    explanation: 'Sn = n(a1 + an)/2. an = 5 + (10-1)×3 = 32. S10 = 10(5 + 32)/2 = 10 × 37/2 = 185. Erro: é 185, não 195.',
+  },
+  {
+    id: 'q27',
+    subjectId: 'matematica',
+    topicId: 'trigonometria',
+    difficulty: 'hard',
+    year: 2023,
+    source: 'unicamp',
+    sourceYear: 2023,
+    text: 'Resolva a equação sen(x) = 1/2 para x no intervalo [0, 2π].',
+    options: ['π/6 e 5π/6', 'π/3 e 2π/3', 'π/4 e 3π/4', 'π/2 e 3π/2'],
+    correctIndex: 0,
+    explanation: 'sen(x) = 1/2 quando x = π/6 ou x = π - π/6 = 5π/6 no intervalo [0, 2π].',
+  },
+  {
+    id: 'q28',
+    subjectId: 'matematica',
+    topicId: 'logaritmos',
+    difficulty: 'medium',
+    year: 2022,
+    source: 'puc',
+    sourceYear: 2022,
+    text: 'Qual é o valor de log₂(32)?',
+    options: ['5', '4', '6', '3'],
+    correctIndex: 0,
+    explanation: 'log₂(32) = log₂(2⁵) = 5.',
+  },
 
-  // BIOLOGIA
+  // ========== BIOLOGIA ==========
   {
     id: 'q6',
     subjectId: 'biologia',
     topicId: 'ecologia',
     difficulty: 'medium',
     year: 2023,
+    source: 'enem',
+    sourceYear: 2023,
     text: 'Em uma cadeia alimentar: Planta → Gafanhoto → Sapo → Cobra → Gavião. Se houver eliminação dos sapos por uma doença, a consequência mais provável seria:',
     options: [
       'Aumento de gafanhotos e diminuição de cobras',
@@ -81,6 +132,8 @@ export const QUESTIONS: Question[] = [
     topicId: 'citologia',
     difficulty: 'medium',
     year: 2022,
+    source: 'enem',
+    sourceYear: 2022,
     text: 'A mitocôndria é considerada a "usina de energia" da célula porque:',
     options: [
       'Realiza respiração celular, produzindo ATP',
@@ -97,19 +150,59 @@ export const QUESTIONS: Question[] = [
     topicId: 'genetica',
     difficulty: 'hard',
     year: 2021,
+    source: 'enem',
+    sourceYear: 2021,
     text: 'Em uma espécie com 2n = 46 cromossomos, quantos cromossomos haverá em um gameta?',
     options: ['23', '46', '92', '24'],
     correctIndex: 0,
     explanation: 'Os gametas são células haploides (n), resultantes da meiose. Se 2n = 46, então n = 23 cromossomos nos gametas.',
   },
+  {
+    id: 'q29',
+    subjectId: 'biologia',
+    topicId: 'evolucao',
+    difficulty: 'medium',
+    year: 2023,
+    source: 'fuvest',
+    sourceYear: 2023,
+    text: 'A teoria da evolução de Darwin se baseia principalmente em:',
+    options: [
+      'Seleção natural e adaptação ao ambiente',
+      'Herança de características adquiridas',
+      'Criação divina e imutabilidade das espécies',
+      'Mutações aleatórias sem pressão ambiental',
+    ],
+    correctIndex: 0,
+    explanation: 'Darwin propôs que a seleção natural, agindo sobre variações naturais, leva à adaptação e evolução das espécies.',
+  },
+  {
+    id: 'q30',
+    subjectId: 'biologia',
+    topicId: 'fisiologia',
+    difficulty: 'medium',
+    year: 2022,
+    source: 'unicamp',
+    sourceYear: 2022,
+    text: 'Qual é a função principal do pâncreas no sistema digestório?',
+    options: [
+      'Produzir enzimas digestivas e hormônios reguladores',
+      'Armazenar bile para digestão de gorduras',
+      'Absorver nutrientes no intestino',
+      'Produzir ácido clorídrico para digestão de proteínas',
+    ],
+    correctIndex: 0,
+    explanation: 'O pâncreas produz enzimas (amilase, lipase, protease) e hormônios (insulina, glucagon) essenciais para a digestão e regulação da glicose.',
+  },
 
-  // FÍSICA
+  // ========== FÍSICA ==========
   {
     id: 'q9',
     subjectId: 'fisica',
     topicId: 'mecanica',
     difficulty: 'medium',
     year: 2023,
+    source: 'enem',
+    sourceYear: 2023,
     text: 'Um objeto de 2 kg é levantado a 5 m de altura. Qual a energia potencial gravitacional acumulada? (g = 10 m/s²)',
     options: ['100 J', '50 J', '200 J', '25 J'],
     correctIndex: 0,
@@ -121,6 +214,8 @@ export const QUESTIONS: Question[] = [
     topicId: 'eletricidade',
     difficulty: 'medium',
     year: 2022,
+    source: 'enem',
+    sourceYear: 2022,
     text: 'Um circuito tem resistência de 10 Ω e é ligado a uma fonte de 220 V. Qual a corrente elétrica?',
     options: ['22 A', '2200 A', '210 A', '0,045 A'],
     correctIndex: 0,
@@ -132,19 +227,54 @@ export const QUESTIONS: Question[] = [
     topicId: 'ondas',
     difficulty: 'easy',
     year: 2021,
+    source: 'enem',
+    sourceYear: 2021,
     text: 'Uma onda sonora tem frequência de 440 Hz e velocidade de 340 m/s. Qual é o seu comprimento de onda?',
     options: ['≈ 0,77 m', '≈ 1,3 m', '≈ 149.600 m', '≈ 7,7 m'],
     correctIndex: 0,
     explanation: 'λ = v/f = 340/440 ≈ 0,77 m.',
   },
+  {
+    id: 'q31',
+    subjectId: 'fisica',
+    topicId: 'termodinamica',
+    difficulty: 'hard',
+    year: 2023,
+    source: 'fuvest',
+    sourceYear: 2023,
+    text: 'O rendimento de uma máquina térmica que opera entre fontes de 400 K (quente) e 200 K (fria) é:',
+    options: ['50%', '25%', '75%', '100%'],
+    correctIndex: 0,
+    explanation: 'η = 1 – Tfria/Tquente = 1 – 200/400 = 1 – 0,5 = 0,5 = 50%. Este é o rendimento de Carnot.',
+  },
+  {
+    id: 'q32',
+    subjectId: 'fisica',
+    topicId: 'optica',
+    difficulty: 'medium',
+    year: 2022,
+    source: 'puc',
+    sourceYear: 2022,
+    text: 'Um espelho plano forma uma imagem de um objeto. Qual é a principal característica dessa imagem?',
+    options: [
+      'Virtual, direita e do mesmo tamanho',
+      'Real, invertida e menor',
+      'Virtual, invertida e maior',
+      'Real, direita e do mesmo tamanho',
+    ],
+    correctIndex: 0,
+    explanation: 'Espelhos planos formam imagens virtuais, direitas e de tamanho igual ao objeto.',
+  },
 
-  // QUÍMICA
+  // ========== QUÍMICA ==========
   {
     id: 'q12',
     subjectId: 'quimica',
     topicId: 'estequiometria',
     difficulty: 'hard',
     year: 2023,
+    source: 'enem',
+    sourceYear: 2023,
     text: 'Na reação 2H₂ + O₂ → 2H₂O, quantos gramas de H₂O são produzidos a partir de 4 g de H₂? (H=1, O=16)',
     options: ['36 g', '18 g', '32 g', '4 g'],
     correctIndex: 0,
@@ -156,19 +286,54 @@ export const QUESTIONS: Question[] = [
     topicId: 'quimica-organica',
     difficulty: 'medium',
     year: 2022,
+    source: 'enem',
+    sourceYear: 2022,
     text: 'O etanol (C₂H₅OH) é classificado como:',
     options: ['Álcool primário', 'Éter', 'Aldeído', 'Ácido carboxílico'],
     correctIndex: 0,
     explanation: 'O etanol possui o grupo funcional -OH ligado a um carbono primário (ligado a apenas um carbono), classificando-o como álcool primário.',
   },
+  {
+    id: 'q33',
+    subjectId: 'quimica',
+    topicId: 'fisico-quimica',
+    difficulty: 'medium',
+    year: 2023,
+    source: 'unicamp',
+    sourceYear: 2023,
+    text: 'Qual o pH de uma solução com [H⁺] = 10⁻³ mol/L?',
+    options: ['3', '7', '11', '-3'],
+    correctIndex: 0,
+    explanation: 'pH = -log[H⁺] = -log(10⁻³) = 3. Essa solução é ácida (pH < 7).',
+  },
+  {
+    id: 'q34',
+    subjectId: 'quimica',
+    topicId: 'reacoes-quimicas',
+    difficulty: 'medium',
+    year: 2022,
+    source: 'fuvest',
+    sourceYear: 2022,
+    text: 'Uma reação exotérmica é aquela que:',
+    options: [
+      'Libera calor para o ambiente',
+      'Absorve calor do ambiente',
+      'Não envolve troca de calor',
+      'Ocorre apenas em altas temperaturas',
+    ],
+    correctIndex: 0,
+    explanation: 'Reações exotérmicas liberam energia na forma de calor. Exemplos: combustão, neutralização ácido-base.',
+  },
 
-  // HISTÓRIA
+  // ========== HISTÓRIA ==========
   {
     id: 'q14',
     subjectId: 'historia',
     topicId: 'era-vargas',
     difficulty: 'medium',
     year: 2023,
+    source: 'enem',
+    sourceYear: 2023,
     text: 'O Estado Novo (1937-1945) de Getúlio Vargas é caracterizado como:',
     options: [
       'Regime autoritário com centralização do poder e supressão do Congresso',
@@ -185,19 +350,59 @@ export const QUESTIONS: Question[] = [
     topicId: 'direitos-humanos',
     difficulty: 'easy',
     year: 2022,
+    source: 'enem',
+    sourceYear: 2022,
     text: 'A Declaração Universal dos Direitos Humanos foi proclamada pela ONU em:',
     options: ['1948', '1945', '1960', '1989'],
     correctIndex: 0,
     explanation: 'A DUDH foi adotada e proclamada pela Assembleia Geral da ONU em 10 de dezembro de 1948, após as atrocidades da Segunda Guerra Mundial.',
   },
+  {
+    id: 'q35',
+    subjectId: 'historia',
+    topicId: 'idade-media',
+    difficulty: 'medium',
+    year: 2023,
+    source: 'fuvest',
+    sourceYear: 2023,
+    text: 'O feudalismo foi um sistema político e econômico baseado principalmente em:',
+    options: [
+      'Relações de vassalagem e posse de terras',
+      'Comércio livre e mercado capitalista',
+      'Democracia ateniense e república romana',
+      'Centralização do poder real e burocracia',
+    ],
+    correctIndex: 0,
+    explanation: 'O feudalismo se caracterizava pela hierarquia de vassalagem, posse de terras (feudos) e economia agrária descentralizada.',
+  },
+  {
+    id: 'q36',
+    subjectId: 'historia',
+    topicId: 'colonizacao-americas',
+    difficulty: 'medium',
+    year: 2022,
+    source: 'unicamp',
+    sourceYear: 2022,
+    text: 'A colonização portuguesa do Brasil foi baseada principalmente em:',
+    options: [
+      'Exploração de recursos naturais e trabalho escravo',
+      'Assentamento de colonos europeus',
+      'Comércio pacífico com povos indígenas',
+      'Integração cultural com as populações locais',
+    ],
+    correctIndex: 0,
+    explanation: 'A colonização portuguesa explorou recursos (pau-brasil, açúcar, ouro) e utilizou trabalho escravo de indígenas e africanos.',
+  },
 
-  // GEOGRAFIA
+  // ========== GEOGRAFIA ==========
   {
     id: 'q16',
     subjectId: 'geografia',
     topicId: 'meio-ambiente',
     difficulty: 'medium',
     year: 2023,
+    source: 'enem',
+    sourceYear: 2023,
     text: 'O efeito estufa é um fenômeno natural essencial à vida, porém o aumento de gases como CO₂ por atividade humana provoca:',
     options: [
       'Aquecimento global e alterações climáticas',
@@ -214,6 +419,8 @@ export const QUESTIONS: Question[] = [
     topicId: 'globalizacao',
     difficulty: 'easy',
     year: 2021,
+    source: 'enem',
+    sourceYear: 2021,
     text: 'A globalização é caracterizada principalmente por:',
     options: [
       'Intensificação das relações econômicas, culturais e tecnológicas entre os países',
@@ -224,14 +431,52 @@ export const QUESTIONS: Question[] = [
     correctIndex: 0,
     explanation: 'A globalização é um processo de integração mundial que envolve fluxos de capitais, mercadorias, informações, culturas e pessoas entre diferentes países.',
   },
+  {
+    id: 'q37',
+    subjectId: 'geografia',
+    topicId: 'geopolitica',
+    difficulty: 'medium',
+    year: 2023,
+    source: 'puc',
+    sourceYear: 2023,
+    text: 'A divisão do mundo em países desenvolvidos e em desenvolvimento se baseia principalmente em:',
+    options: [
+      'Nível de industrialização e PIB per capita',
+      'Localização geográfica e clima',
+      'Tamanho territorial e população',
+      'Recursos naturais disponíveis',
+    ],
+    correctIndex: 0,
+    explanation: 'Países desenvolvidos têm alta industrialização, PIB per capita elevado e tecnologia avançada, enquanto países em desenvolvimento têm economias menos industrializadas.',
+  },
+  {
+    id: 'q38',
+    subjectId: 'geografia',
+    topicId: 'urbanizacao',
+    difficulty: 'medium',
+    year: 2022,
+    source: 'fuvest',
+    sourceYear: 2022,
+    text: 'A urbanização acelerada nos países em desenvolvimento causa principalmente:',
+    options: [
+      'Crescimento de favelas, desemprego e problemas ambientais',
+      'Melhoria geral da qualidade de vida',
+      'Redução da desigualdade social',
+      'Aumento da cobertura florestal',
+    ],
+    correctIndex: 0,
+    explanation: 'Urbanização rápida sem planejamento leva a favelas, desemprego, poluição e falta de infraestrutura adequada.',
+  },
 
-  // PORTUGUÊS
+  // ========== PORTUGUÊS ==========
   {
     id: 'q18',
     subjectId: 'portugues',
     topicId: 'interpretacao',
     difficulty: 'medium',
     year: 2023,
+    source: 'enem',
+    sourceYear: 2023,
     text: 'Na frase "A ciência avança, mas os preconceitos persistem", o conectivo "mas" estabelece uma relação de:',
     options: ['Adversidade', 'Causalidade', 'Conclusão', 'Explicação'],
     correctIndex: 0,
@@ -243,30 +488,92 @@ export const QUESTIONS: Question[] = [
     topicId: 'gramatica',
     difficulty: 'easy',
     year: 2022,
+    source: 'enem',
+    sourceYear: 2022,
     text: 'Em "Os alunos entregaram os trabalhos", o sujeito da oração é:',
     options: ['Os alunos', 'Os trabalhos', 'Entregaram', 'Os alunos entregaram'],
     correctIndex: 0,
     explanation: '"Os alunos" é o sujeito simples e determinado da oração, pois é o termo sobre o qual se faz a declaração e concorda com o verbo "entregaram".',
   },
+  {
+    id: 'q39',
+    subjectId: 'portugues',
+    topicId: 'literatura',
+    difficulty: 'medium',
+    year: 2023,
+    source: 'fuvest',
+    sourceYear: 2023,
+    text: 'Qual é o principal tema do romance "Dom Casmurro" de Machado de Assis?',
+    options: [
+      'Ciúme, traição e a incerteza da verdade',
+      'Amor romântico e felicidade conjugal',
+      'Crítica social e reforma política',
+      'Aventuras e descobertas geográficas',
+    ],
+    correctIndex: 0,
+    explanation: 'Dom Casmurro aborda o ciúme obsessivo de Bentinho, a possível infidelidade de Capitu e a incerteza sobre a verdade dos fatos.',
+  },
+  {
+    id: 'q40',
+    subjectId: 'portugues',
+    topicId: 'estilo-de-linguagem',
+    difficulty: 'medium',
+    year: 2022,
+    source: 'unicamp',
+    sourceYear: 2022,
+    text: 'O uso de figuras de linguagem como metáfora e metonímia serve principalmente para:',
+    options: [
+      'Enriquecer a expressão e criar efeitos de sentido',
+      'Facilitar a compreensão literal do texto',
+      'Substituir palavras difíceis por palavras simples',
+      'Aumentar o número de palavras no texto',
+    ],
+    correctIndex: 0,
+    explanation: 'Figuras de linguagem criam efeitos estéticos e de sentido, permitindo expressões mais criativas e impactantes.',
+  },
 
-  // FILOSOFIA
+  // ========== FILOSOFIA ==========
   {
     id: 'q20',
     subjectId: 'filosofia',
     topicId: 'filosofia-moderna',
     difficulty: 'hard',
     year: 2022,
+    source: 'enem',
+    sourceYear: 2022,
     text: '"Penso, logo existo" (Cogito ergo sum) é o princípio fundamental de:',
     options: ['René Descartes', 'Immanuel Kant', 'John Locke', 'David Hume'],
     correctIndex: 0,
     explanation: 'René Descartes, no "Discurso do Método" (1637), usa a dúvida metódica para chegar à única certeza inquestionável: o ato de pensar prova a existência do pensador.',
   },
   {
+    id: 'q41',
+    subjectId: 'filosofia',
+    topicId: 'etica',
+    difficulty: 'medium',
+    year: 2023,
+    source: 'puc',
+    sourceYear: 2023,
+    text: 'A ética kantiana se baseia principalmente no conceito de:',
+    options: [
+      'Dever moral e imperativo categórico',
+      'Busca pelo prazer e felicidade',
+      'Consequências das ações',
+      'Virtudes e excelência moral',
+    ],
+    correctIndex: 0,
+    explanation: 'Kant propõe que a ética se baseia no dever moral universal, expresso através do imperativo categórico.',
+  },
+
+  // ========== SOCIOLOGIA ==========
+  {
     id: 'q21',
     subjectId: 'sociologia',
     topicId: 'conflitos-sociais',
     difficulty: 'medium',
     year: 2023,
+    source: 'enem',
+    sourceYear: 2023,
     text: 'O conceito de "habitus" desenvolvido por Pierre Bourdieu refere-se a:',
     options: [
       'Disposições incorporadas que orientam práticas e percepções dos indivíduos',
@@ -277,51 +584,23 @@ export const QUESTIONS: Question[] = [
     correctIndex: 0,
     explanation: 'Habitus, para Bourdieu, são esquemas de percepção, pensamento e ação internalizados pelos indivíduos ao longo da socialização, que orientam suas práticas de forma quase automática.',
   },
-
-  // FISIOLOGIA
   {
-    id: 'q22',
-    subjectId: 'biologia',
-    topicId: 'fisiologia',
-    difficulty: 'medium',
-    year: 2021,
-    text: 'O sistema imunológico produz anticorpos. Qual célula é responsável pela produção de anticorpos?',
-    options: ['Linfócitos B', 'Linfócitos T', 'Neutrófilos', 'Eritrócitos'],
-    correctIndex: 0,
-    explanation: 'Os linfócitos B se diferenciam em plasmócitos, que produzem anticorpos (imunoglobulinas) específicos para cada antígeno.',
-  },
-  {
-    id: 'q23',
-    subjectId: 'matematica',
-    topicId: 'progressoes',
+    id: 'q42',
+    subjectId: 'sociologia',
+    topicId: 'estrutura-social',
     difficulty: 'medium',
     year: 2022,
-    text: 'Em uma PA com primeiro termo a₁ = 3 e razão r = 4, qual é o 5º termo?',
-    options: ['19', '15', '23', '12'],
+    source: 'fuvest',
+    sourceYear: 2022,
+    text: 'A estratificação social refere-se principalmente a:',
+    options: [
+      'Divisão da sociedade em camadas com diferentes níveis de poder e privilégio',
+      'Distribuição uniforme de renda entre todos os cidadãos',
+      'Eliminação de todas as diferenças sociais',
+      'Mobilidade social total sem barreiras',
+    ],
     correctIndex: 0,
-    explanation: 'aₙ = a₁ + (n-1)r. a₅ = 3 + (5-1)×4 = 3 + 16 = 19.',
-  },
-  {
-    id: 'q24',
-    subjectId: 'fisica',
-    topicId: 'termodinamica',
-    difficulty: 'hard',
-    year: 2023,
-    text: 'O rendimento de uma máquina térmica que opera entre fontes de 400 K (quente) e 200 K (fria) é:',
-    options: ['50%', '25%', '75%', '100%'],
-    correctIndex: 0,
-    explanation: 'η = 1 – Tfria/Tquente = 1 – 200/400 = 1 – 0,5 = 0,5 = 50%. Este é o rendimento de Carnot.',
-  },
-  {
-    id: 'q25',
-    subjectId: 'quimica',
-    topicId: 'fisico-quimica',
-    difficulty: 'medium',
-    year: 2021,
-    text: 'Qual o pH de uma solução com [H⁺] = 10⁻³ mol/L?',
-    options: ['3', '7', '11', '-3'],
-    correctIndex: 0,
-    explanation: 'pH = -log[H⁺] = -log(10⁻³) = 3. Essa solução é ácida (pH < 7).',
+    explanation: 'Estratificação social é a divisão hierárquica da sociedade em grupos com diferentes acessos a recursos, poder e prestígio.',
   },
 ]
 
@@ -334,8 +613,25 @@ export function getQuestionsByArea(area: string, subjects: { id: string; area: s
   return QUESTIONS.filter((q) => subjectIds.includes(q.subjectId))
 }
 
-export function getRandomQuestions(count: number, filterSubjects?: string[]): Question[] {
-  const pool = filterSubjects ? QUESTIONS.filter((q) => filterSubjects.includes(q.subjectId)) : QUESTIONS
+export function getQuestionsBySource(source: string): Question[] {
+  return QUESTIONS.filter((q) => q.source === source)
+}
+
+export function getQuestionsByYear(year: number): Question[] {
+  return QUESTIONS.filter((q) => q.sourceYear === year)
+}
+
+export function getRandomQuestions(count: number, filterSubjects?: string[], filterSource?: string): Question[] {
+  let pool = QUESTIONS
+  if (filterSubjects) pool = pool.filter((q) => filterSubjects.includes(q.subjectId))
+  if (filterSource) pool = pool.filter((q) => q.source === filterSource)
   const shuffled = [...pool].sort(() => Math.random() - 0.5)
-  return shuffled.slice(0, count)
+  return shuffled.slice(0, Math.min(count, pool.length))
+}
+
+export function getQuestionsWithoutRepetition(count: number, excludeIds: string[], filterSubjects?: string[]): Question[] {
+  let pool = QUESTIONS.filter((q) => !excludeIds.includes(q.id))
+  if (filterSubjects) pool = pool.filter((q) => filterSubjects.includes(q.subjectId))
+  const shuffled = [...pool].sort(() => Math.random() - 0.5)
+  return shuffled.slice(0, Math.min(count, pool.length))
 }

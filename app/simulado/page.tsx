@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { ClipboardList, Timer, CheckCircle, XCircle, ChevronRight, RotateCcw, ArrowLeft } from 'lucide-react'
 import { storage } from '@/lib/storage'
-import { QUESTIONS, getRandomQuestions } from '@/lib/data/questions'
+import { QUESTIONS, getRandomQuestions, getQuestionsWithoutRepetition } from '@/lib/data/questions'
 import { SUBJECTS, AREA_LABELS } from '@/lib/data/subjects'
 import { calculateTRI } from '@/lib/tri'
+import { calculateLevel } from '@/lib/xp-config'
 import type { Question, SimuladoSession } from '@/lib/types'
 
 type Phase = 'config' | 'quiz' | 'result'
@@ -19,6 +20,7 @@ export default function SimuladoPage() {
   // Config
   const [questionCount, setQuestionCount] = useState(10)
   const [areaFilter, setAreaFilter] = useState<string>('all')
+  const [sourceFilter, setSourceFilter] = useState<string>('all')
 
   // Quiz
   const [questions, setQuestions] = useState<Question[]>([])
@@ -40,7 +42,8 @@ export default function SimuladoPage() {
     const subjectFilter = areaFilter === 'all'
       ? undefined
       : SUBJECTS.filter((s) => s.area === areaFilter).map((s) => s.id)
-    const qs = getRandomQuestions(questionCount, subjectFilter)
+    const source = sourceFilter === 'all' ? undefined : sourceFilter
+    const qs = getRandomQuestions(questionCount, subjectFilter, source)
     if (qs.length === 0) return
     setQuestions(qs)
     setCurrentIdx(0)
@@ -78,6 +81,7 @@ export default function SimuladoPage() {
 
     const session: SimuladoSession = {
       id: Math.random().toString(36).slice(2),
+      userId: storage.getCurrentUserId(),
       type: areaFilter === 'all' ? 'full' : 'area',
       areaFilter: areaFilter === 'all' ? undefined : areaFilter as SimuladoSession['areaFilter'],
       totalQuestions: questions.length,
@@ -93,8 +97,27 @@ export default function SimuladoPage() {
     setSessions(updated)
     storage.saveSimulados(updated)
 
+    // Registra respostas com XP
+    const xpPerQuestion = 10
     questions.forEach((q) => {
-      storage.recordCorrect(q.subjectId, answers[q.id] === q.correctIndex)
+      const isCorrect = answers[q.id] === q.correctIndex
+      const xpGained = isCorrect ? xpPerQuestion : 2
+      storage.recordCorrect(q.subjectId, q.topicId, isCorrect, xpGained)
+    })
+    
+    // XP por completar simulado
+    const simuladoXP = 150
+    const p = storage.getProgress()
+    const newTotalXP = p.level.totalXP + simuladoXP
+    const levelInfo = calculateLevel(newTotalXP)
+    storage.saveProgress({
+      ...p,
+      level: {
+        currentLevel: levelInfo.level,
+        totalXP: newTotalXP,
+        xpForNextLevel: levelInfo.xpForNext,
+        xpInCurrentLevel: levelInfo.xpInCurrent,
+      },
     })
 
     setResult(session)
@@ -136,6 +159,31 @@ export default function SimuladoPage() {
                     }`}
                   >
                     {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-slate-400 uppercase tracking-wide mb-2 block">Banca/Fonte</label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSourceFilter('all')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium border transition ${
+                    sourceFilter === 'all' ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-700 text-slate-400 hover:border-slate-500'
+                  }`}
+                >
+                  Todas as bancas
+                </button>
+                {['enem', 'fuvest', 'unicamp', 'puc', 'ita', 'ime'].map((source) => (
+                  <button
+                    key={source}
+                    onClick={() => setSourceFilter(source)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition ${
+                      sourceFilter === source ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-700 text-slate-400 hover:border-slate-500'
+                    }`}
+                  >
+                    {source.toUpperCase()}
                   </button>
                 ))}
               </div>

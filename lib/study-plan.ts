@@ -1,20 +1,8 @@
 import { SUBJECTS } from './data/subjects'
 import { TOPIC_CONTENT } from './data/content'
 import { QUESTIONS } from './data/questions'
-import type { UserProgress } from './types'
-
-export interface StudyItem {
-  topicId: string
-  subjectId: string
-  subjectName: string
-  topicName: string
-  subjectColor: string
-  estimatedMinutes: number
-  reason: 'novo' | 'fraco' | 'reforco' | 'revisao'
-  accuracyPct: number | null
-  hasContent: boolean
-  hasQuestions: boolean
-}
+import type { UserProgress, StudyItem, DailyStudyPlan } from './types'
+import { storage } from './storage'
 
 export interface StudyPlan {
   items: StudyItem[]
@@ -22,7 +10,17 @@ export interface StudyPlan {
   generatedAt: string
 }
 
-// Gera plano do dia baseado no desempenho real do aluno
+/**
+ * Gera um ID único para um item do plano de estudo
+ */
+function generateStudyItemId(topicId: string, date: string): string {
+  return `${topicId}-${date}`
+}
+
+/**
+ * Gera plano do dia baseado no desempenho real do aluno
+ * Agora com suporte a persistência e consistência durante o dia
+ */
 export function generateStudyPlan(progress: UserProgress, maxItems = 6): StudyPlan {
   const scored: Array<StudyItem & { score: number }> = []
   const today = new Date().toISOString().split('T')[0]
@@ -67,10 +65,13 @@ export function generateStudyPlan(progress: UserProgress, maxItems = 6): StudyPl
       if (hasContent) score += 10
       if (hasQuestions) score += 5
 
-      // Aleatoriedade leve para variar o plano
-      score += Math.random() * 15
+      // Aleatoriedade leve para variar o plano (mas controlada para consistência)
+      // Usamos a data como seed para garantir consistência durante o dia
+      const seed = parseInt(today.replace(/-/g, '')) + topic.id.charCodeAt(0)
+      score += (seed % 15)
 
       scored.push({
+        id: generateStudyItemId(topic.id, today),
         topicId: topic.id,
         subjectId: subject.id,
         subjectName: subject.name,
@@ -123,6 +124,58 @@ function interleaveBySubject<T extends { subjectId: string; score: number }>(
   }
 
   return result
+}
+
+/**
+ * Obtém ou gera o plano de estudo do dia
+ * Se já existe um plano para hoje, retorna o existente (consistência)
+ * Se não existe, gera um novo
+ */
+export function getTodayStudyPlan(progress: UserProgress): StudyItem[] {
+  const today = new Date().toISOString().split('T')[0]
+
+  // Verifica se há um plano persistido para hoje
+  const savedPlan = storage.getDailyPlan()
+  if (savedPlan && savedPlan.date === today) {
+    return savedPlan.items
+  }
+
+  // Gera novo plano
+  const newPlan = generateStudyPlan(progress, 6)
+
+  // Cria a estrutura de DailyStudyPlan
+  const dailyPlan: DailyStudyPlan = {
+    date: today,
+    items: newPlan.items,
+    totalMinutes: newPlan.totalMinutes,
+    generatedAt: newPlan.generatedAt,
+    completedItems: [],
+  }
+
+  // Persiste o plano
+  storage.saveDailyPlan(dailyPlan)
+
+  return newPlan.items
+}
+
+/**
+ * Regenera o plano do dia (força uma nova geração)
+ * Útil quando o usuário quer um novo plano
+ */
+export function regenerateStudyPlan(progress: UserProgress): StudyItem[] {
+  const today = new Date().toISOString().split('T')[0]
+  const newPlan = generateStudyPlan(progress, 6)
+
+  const dailyPlan: DailyStudyPlan = {
+    date: today,
+    items: newPlan.items,
+    totalMinutes: newPlan.totalMinutes,
+    generatedAt: newPlan.generatedAt,
+    completedItems: [],
+  }
+
+  storage.saveDailyPlan(dailyPlan)
+  return newPlan.items
 }
 
 export const REASON_LABELS: Record<StudyItem['reason'], { label: string; color: string }> = {
