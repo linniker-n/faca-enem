@@ -81,7 +81,32 @@ A aula deve seguir rigorosamente este formato JSON, mas o conteúdo deve ser pro
 
     if (!raw) return Response.json({ error: 'Resposta vazia do Gemini' }, { status: 500 })
 
-    return Response.json({ content: JSON.parse(raw) })
+    // Remove markdown fences se presentes
+    let cleanedJson = raw.trim()
+    if (cleanedJson.startsWith('```json')) {
+      cleanedJson = cleanedJson.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+    } else if (cleanedJson.startsWith('```')) {
+      cleanedJson = cleanedJson.replace(/^```\s*/, '').replace(/\s*```$/, '')
+    }
+
+    let content: unknown
+    try {
+      content = JSON.parse(cleanedJson)
+    } catch (parseErr) {
+      // Se falhar, tenta remover caracteres de controle problemáticos
+      const sanitized = cleanedJson
+        .replace(/\r/g, '\\r')
+        .replace(/\t/g, '\\t')
+        .replace(/[\x00-\x1F]/g, '') // Remove caracteres de controle
+      try {
+        content = JSON.parse(sanitized)
+      } catch {
+        const parseErrMsg = parseErr instanceof Error ? parseErr.message : 'Erro ao parsear JSON'
+        return Response.json({ error: `Falha ao processar resposta do Gemini: ${parseErrMsg}` }, { status: 500 })
+      }
+    }
+
+    return Response.json({ content })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erro desconhecido'
     return Response.json({ error: message }, { status: 500 })

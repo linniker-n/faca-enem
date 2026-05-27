@@ -74,7 +74,31 @@ export async function POST(req: NextRequest) {
 
     if (!raw) return Response.json({ error: 'Resposta vazia do Gemini' }, { status: 500 })
 
-    const feedback = JSON.parse(raw) as Record<string, unknown>
+    // Remove markdown fences se presentes
+    let cleanedJson = raw.trim()
+    if (cleanedJson.startsWith('```json')) {
+      cleanedJson = cleanedJson.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+    } else if (cleanedJson.startsWith('```')) {
+      cleanedJson = cleanedJson.replace(/^```\s*/, '').replace(/\s*```$/, '')
+    }
+
+    let feedback: Record<string, unknown>
+    try {
+      feedback = JSON.parse(cleanedJson) as Record<string, unknown>
+    } catch (parseErr) {
+      // Se falhar, tenta remover caracteres de controle problemáticos
+      const sanitized = cleanedJson
+        .replace(/\r/g, '\\r')
+        .replace(/\t/g, '\\t')
+        .replace(/[\x00-\x1F]/g, '') // Remove caracteres de controle
+      try {
+        feedback = JSON.parse(sanitized) as Record<string, unknown>
+      } catch {
+        const parseErrMsg = parseErr instanceof Error ? parseErr.message : 'Erro ao parsear JSON'
+        return Response.json({ error: `Falha ao processar resposta do Gemini: ${parseErrMsg}` }, { status: 500 })
+      }
+    }
+
     feedback.evaluatedAt = new Date().toISOString()
     feedback.model = 'gemini-3.5-flash'
 
