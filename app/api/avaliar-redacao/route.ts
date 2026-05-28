@@ -87,15 +87,27 @@ export async function POST(req: NextRequest) {
       feedback = JSON.parse(cleanedJson) as Record<string, unknown>
     } catch (parseErr) {
       // Se falhar, tenta remover caracteres de controle problemáticos
-      const sanitized = cleanedJson
-        .replace(/\r/g, '\\r')
-        .replace(/\t/g, '\\t')
-        .replace(/[\x00-\x1F]/g, '') // Remove caracteres de controle
+      // Estratégia: escapar quebras de linha e caracteres especiais dentro de strings
+      let sanitized = cleanedJson
+        .replace(/\r\n/g, '\\n') // Quebras de linha CRLF
+        .replace(/\r/g, '\\n') // Quebras de linha CR
+        .replace(/\n(?![\s]*[}\]\}])/g, '\\n') // Quebras de linha dentro de valores (não no final)
+        .replace(/\t/g, ' ') // Tabs para espaços
+      
+      // Tenta fazer parse novamente
       try {
         feedback = JSON.parse(sanitized) as Record<string, unknown>
-      } catch {
-        const parseErrMsg = parseErr instanceof Error ? parseErr.message : 'Erro ao parsear JSON'
-        return Response.json({ error: `Falha ao processar resposta do Gemini: ${parseErrMsg}` }, { status: 500 })
+      } catch (sanitizeErr) {
+        // Última tentativa: usar uma abordagem mais agressiva
+        // Remover todos os caracteres de controle exceto espaços
+        sanitized = cleanedJson.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, '')
+        try {
+          feedback = JSON.parse(sanitized) as Record<string, unknown>
+        } catch {
+          const parseErrMsg = parseErr instanceof Error ? parseErr.message : 'Erro ao parsear JSON'
+          const sanitizeErrMsg = sanitizeErr instanceof Error ? sanitizeErr.message : 'Erro ao sanitizar'
+          return Response.json({ error: `Falha ao processar resposta do Gemini: ${parseErrMsg} (sanitização: ${sanitizeErrMsg})` }, { status: 500 })
+        }
       }
     }
 
