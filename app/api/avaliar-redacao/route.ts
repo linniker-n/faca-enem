@@ -7,23 +7,108 @@ Sua missão é avaliar a redação com rigor acadêmico, mas explicar os erros d
 Seja específico: cite partes do texto do aluno no feedback.
 O tom deve ser de um mentor que acredita no potencial do estudante.
 
-Avalie com base nas 5 competências oficiais e retorne APENAS um objeto JSON válido, sem markdown ou texto extra.
+IMPORTANTE: Você DEVE retornar APENAS um objeto JSON válido, sem markdown, sem código, sem explicações. Apenas o JSON puro.
 
-Formato esperado:
+Avalie com base nas 5 competências oficiais e retorne um objeto JSON com esta estrutura exata:
 {
-  "competency1": { "score": <0|40|80|120|160|200>, "feedback": "<feedback específico citando o texto>" },
-  "competency2": { "score": <0|40|80|120|160|200>, "feedback": "<feedback específico citando o texto>" },
-  "competency3": { "score": <0|40|80|120|160|200>, "feedback": "<feedback específico citando o texto>" },
-  "competency4": { "score": <0|40|80|120|160|200>, "feedback": "<feedback específico citando o texto>" },
-  "competency5": { "score": <0|40|80|120|160|200>, "feedback": "<feedback específico citando o texto>" },
-  "totalScore": <soma das 5 competências>,
-  "strengths": ["<ponto forte concreto 1>", "<ponto forte concreto 2>"],
-  "improvements": ["<melhoria acionável 1>", "<melhoria acionável 2>", "<melhoria acionável 3>"]
+  "competency1": { "score": 160, "feedback": "Feedback aqui" },
+  "competency2": { "score": 120, "feedback": "Feedback aqui" },
+  "competency3": { "score": 80, "feedback": "Feedback aqui" },
+  "competency4": { "score": 40, "feedback": "Feedback aqui" },
+  "competency5": { "score": 200, "feedback": "Feedback aqui" },
+  "totalScore": 600,
+  "strengths": ["ponto forte 1", "ponto forte 2"],
+  "improvements": ["melhoria 1", "melhoria 2", "melhoria 3"]
 }
 
-Pontuação por competência: 0, 40, 80, 120, 160 ou 200 pontos. Nota máxima total: 1000 pontos.`
+Regras:
+- Pontuação por competência: 0, 40, 80, 120, 160 ou 200 pontos
+- Nota máxima total: 1000 pontos
+- Feedback deve ser concreto e citar partes do texto
+- Use APENAS aspas duplas (") em todo o JSON
+- NÃO use quebras de linha dentro dos valores de feedback
+- Se precisar de quebra de linha no feedback, use espaço em branco normal`
 
-const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent'
+const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+
+/**
+ * Extrai JSON de uma string que pode conter markdown, espaços, ou caracteres especiais
+ * Usa uma estratégia de busca de chaves conhecidas para localizar o JSON válido
+ */
+function extractJsonFromResponse(text: string): string {
+  // Tenta remover markdown fences primeiro
+  let cleaned = text.trim()
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+  } else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '')
+  }
+
+  // Tenta parse direto
+  try {
+    JSON.parse(cleaned)
+    return cleaned
+  } catch {
+    // Estratégia 1: Encontrar o primeiro { e o último } e extrair tudo entre eles
+    const firstBrace = cleaned.indexOf('{')
+    const lastBrace = cleaned.lastIndexOf('}')
+    
+    if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
+      const extracted = cleaned.substring(firstBrace, lastBrace + 1)
+      try {
+        JSON.parse(extracted)
+        return extracted
+      } catch {
+        // Continua para próxima estratégia
+      }
+    }
+
+    // Estratégia 2: Remover caracteres de controle problemáticos (mantendo espaços)
+    let sanitized = cleaned
+      .split('\n')
+      .map(line => line.trim())
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .replace(/,\s+}/g, '}')
+      .replace(/,\s+]/g, ']')
+
+    try {
+      JSON.parse(sanitized)
+      return sanitized
+    } catch {
+      // Continua para próxima estratégia
+    }
+
+    // Estratégia 3: Escapar aspas duplas não escapadas dentro de strings
+    // Procura por padrões como: "chave": "valor com "aspas" dentro"
+    sanitized = cleaned.replace(/"([^"]*)":\s*"([^"]*)"([^,}\]]*)/g, (match, key, value, rest) => {
+      // Escapa aspas dentro do valor
+      const escapedValue = value.replace(/"/g, '\\"')
+      return `"${key}": "${escapedValue}"${rest}`
+    })
+
+    try {
+      JSON.parse(sanitized)
+      return sanitized
+    } catch {
+      // Continua para próxima estratégia
+    }
+
+    // Estratégia 4: Remover tudo que não seja JSON válido
+    // Mantém apenas caracteres que podem estar em JSON
+    sanitized = cleaned
+      .replace(/[\r\n\t]/g, ' ')
+      .replace(/\s+/g, ' ')
+
+    try {
+      JSON.parse(sanitized)
+      return sanitized
+    } catch {
+      // Se tudo falhar, retorna o original
+      return cleaned
+    }
+  }
+}
 
 export async function POST(req: NextRequest) {
   const apiKey = process.env.GEMINI_API_KEY
@@ -53,9 +138,11 @@ export async function POST(req: NextRequest) {
           parts: [{ text: `**Tema da Redação:** ${theme}\n\n**Texto do Aluno:**\n${text}` }],
         }],
         generationConfig: {
-          temperature: 0.3,
+          temperature: 0.2,
           maxOutputTokens: 2048,
           response_mime_type: 'application/json',
+          topP: 0.95,
+          topK: 40,
         },
       }),
     })
@@ -74,45 +161,33 @@ export async function POST(req: NextRequest) {
 
     if (!raw) return Response.json({ error: 'Resposta vazia do Gemini' }, { status: 500 })
 
-    // Remove markdown fences se presentes
-    let cleanedJson = raw.trim()
-    if (cleanedJson.startsWith('```json')) {
-      cleanedJson = cleanedJson.replace(/^```json\s*/, '').replace(/\s*```$/, '')
-    } else if (cleanedJson.startsWith('```')) {
-      cleanedJson = cleanedJson.replace(/^```\s*/, '').replace(/\s*```$/, '')
-    }
+    // Extrai JSON da resposta
+    const jsonString = extractJsonFromResponse(raw)
 
     let feedback: Record<string, unknown>
     try {
-      feedback = JSON.parse(cleanedJson) as Record<string, unknown>
+      feedback = JSON.parse(jsonString) as Record<string, unknown>
     } catch (parseErr) {
-      // Se falhar, tenta remover caracteres de controle problemáticos
-      // Estratégia: escapar quebras de linha e caracteres especiais dentro de strings
-      let sanitized = cleanedJson
-        .replace(/\r\n/g, '\\n') // Quebras de linha CRLF
-        .replace(/\r/g, '\\n') // Quebras de linha CR
-        .replace(/\n(?![\s]*[}\]\}])/g, '\\n') // Quebras de linha dentro de valores (não no final)
-        .replace(/\t/g, ' ') // Tabs para espaços
-      
-      // Tenta fazer parse novamente
-      try {
-        feedback = JSON.parse(sanitized) as Record<string, unknown>
-      } catch (sanitizeErr) {
-        // Última tentativa: usar uma abordagem mais agressiva
-        // Remover todos os caracteres de controle exceto espaços
-        sanitized = cleanedJson.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, '')
-        try {
-          feedback = JSON.parse(sanitized) as Record<string, unknown>
-        } catch {
-          const parseErrMsg = parseErr instanceof Error ? parseErr.message : 'Erro ao parsear JSON'
-          const sanitizeErrMsg = sanitizeErr instanceof Error ? sanitizeErr.message : 'Erro ao sanitizar'
-          return Response.json({ error: `Falha ao processar resposta do Gemini: ${parseErrMsg} (sanitização: ${sanitizeErrMsg})` }, { status: 500 })
-        }
-      }
+      const parseErrMsg = parseErr instanceof Error ? parseErr.message : 'Erro ao parsear JSON'
+      console.error('Raw response:', raw)
+      console.error('Extracted JSON:', jsonString)
+      console.error('Parse error:', parseErrMsg)
+      return Response.json({ 
+        error: `Falha ao processar resposta do Gemini: ${parseErrMsg}`,
+        debug: { raw: raw.substring(0, 500), extracted: jsonString.substring(0, 500) }
+      }, { status: 500 })
+    }
+
+    // Validação básica da estrutura
+    if (!feedback.competency1 || !feedback.totalScore) {
+      return Response.json({ 
+        error: 'Resposta do Gemini não contém estrutura esperada',
+        debug: { received: feedback }
+      }, { status: 500 })
     }
 
     feedback.evaluatedAt = new Date().toISOString()
-    feedback.model = 'gemini-3.5-flash'
+    feedback.model = 'gemini-2.0-flash'
 
     return Response.json({ feedback })
   } catch (err: unknown) {
