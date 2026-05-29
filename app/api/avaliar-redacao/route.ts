@@ -29,7 +29,8 @@ Regras:
 - NÃO use quebras de linha dentro dos valores de feedback
 - Se precisar de quebra de linha no feedback, use espaço em branco normal`
 
-const OPENAI_API = 'https://api.openai.com/v1/chat/completions'
+const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
+const OPENAI_API = `${OPENAI_BASE_URL}/chat/completions`
 
 /**
  * Extrai JSON de uma string que pode conter markdown, espaços, ou caracteres especiais
