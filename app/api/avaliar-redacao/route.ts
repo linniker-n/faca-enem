@@ -29,7 +29,7 @@ Regras:
 - NÃO use quebras de linha dentro dos valores de feedback
 - Se precisar de quebra de linha no feedback, use espaço em branco normal`
 
-const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+const OPENAI_API = 'https://api.openai.com/v1/chat/completions'
 
 /**
  * Extrai JSON de uma string que pode conter markdown, espaços, ou caracteres especiais
@@ -111,8 +111,8 @@ function extractJsonFromResponse(text: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) return Response.json({ error: 'GEMINI_API_KEY não configurada' }, { status: 503 })
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) return Response.json({ error: 'OPENAI_API_KEY não configurada' }, { status: 503 })
 
   let theme: string, text: string
   try {
@@ -128,38 +128,43 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const res = await fetch(`${GEMINI_API}?key=${apiKey}`, {
+    const res = await fetch(OPENAI_API, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [{
-          role: 'user',
-          parts: [{ text: `**Tema da Redação:** ${theme}\n\n**Texto do Aluno:**\n${text}` }],
-        }],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 2048,
-          response_mime_type: 'application/json',
-          topP: 0.95,
-          topK: 40,
-        },
+        model: 'gpt-4.1-mini',
+        messages: [
+          {
+            role: 'system',
+            content: SYSTEM_PROMPT
+          },
+          {
+            role: 'user',
+            content: `**Tema da Redação:** ${theme}\n\n**Texto do Aluno:**\n${text}`
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 2048,
+        response_format: { type: 'json_object' }
       }),
     })
 
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}))
       const msg = (errBody as { error?: { message?: string } }).error?.message ?? `HTTP ${res.status}`
-      return Response.json({ error: `Gemini: ${msg}` }, { status: 500 })
+      return Response.json({ error: `OpenAI: ${msg}` }, { status: 500 })
     }
 
-    type GeminiResponse = {
-      candidates?: { content?: { parts?: { text?: string }[] } }[]
+    type OpenAIResponse = {
+      choices?: { message?: { content?: string } }[]
     }
-    const json = (await res.json()) as GeminiResponse
-    const raw = json.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+    const json = (await res.json()) as OpenAIResponse
+    const raw = json.choices?.[0]?.message?.content ?? ''
 
-    if (!raw) return Response.json({ error: 'Resposta vazia do Gemini' }, { status: 500 })
+    if (!raw) return Response.json({ error: 'Resposta vazia do OpenAI' }, { status: 500 })
 
     // Extrai JSON da resposta
     const jsonString = extractJsonFromResponse(raw)
@@ -173,7 +178,7 @@ export async function POST(req: NextRequest) {
       console.error('Extracted JSON:', jsonString)
       console.error('Parse error:', parseErrMsg)
       return Response.json({ 
-        error: `Falha ao processar resposta do Gemini: ${parseErrMsg}`,
+        error: `Falha ao processar resposta do OpenAI: ${parseErrMsg}`,
         debug: { raw: raw.substring(0, 500), extracted: jsonString.substring(0, 500) }
       }, { status: 500 })
     }
@@ -181,13 +186,13 @@ export async function POST(req: NextRequest) {
     // Validação básica da estrutura
     if (!feedback.competency1 || !feedback.totalScore) {
       return Response.json({ 
-        error: 'Resposta do Gemini não contém estrutura esperada',
+        error: 'Resposta do OpenAI não contém estrutura esperada',
         debug: { received: feedback }
       }, { status: 500 })
     }
 
     feedback.evaluatedAt = new Date().toISOString()
-    feedback.model = 'gemini-2.0-flash'
+    feedback.model = 'gpt-4.1-mini'
 
     return Response.json({ feedback })
   } catch (err: unknown) {
