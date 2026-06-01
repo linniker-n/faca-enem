@@ -25,6 +25,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Mobile viewport fixes */
+@media (max-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    max-width: 100%;
+  }
 }
 
 /* Custom scrollbar */
@@ -80,4 +96,53 @@ body {
   transition: stroke-dashoffset 0.5s ease;
   transform: rotate(-90deg);
   transform-origin: 50% 50%;
+}
+
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  /* Touch-friendly buttons */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent zoom on input focus */
+  input, textarea, select {
+    font-size: 16px;
+  }
+  
+  /* Safe area support for notched devices */
+  body {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Prevent text selection issues on mobile */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Smooth scrolling for mobile */
+.scroll-smooth {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent horizontal overflow */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Ensure full viewport height on mobile */
+@supports (height: 100dvh) {
+  body {
+    min-height: 100dvh;
+  }
 }

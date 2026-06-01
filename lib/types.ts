@@ -1,4 +1,6 @@
 export type Area = 'linguagens' | 'humanas' | 'natureza' | 'matematica'
+export type ExamType = 'enem' | 'encceja'
+export type EducationLevel = 'fundamental' | 'medio'
 
 export interface Topic {
   id: string
@@ -89,6 +91,8 @@ export interface StudyItem {
  */
 export interface UserProgress {
   userId: string // Identificador único do usuário
+  examType: ExamType // ENEM ou Encceja
+  educationLevel?: EducationLevel // Fundamental ou Médio (para Encceja)
   streak: number
   lastStudyDate: string | null
   totalStudyMinutes: number
@@ -143,8 +147,10 @@ export interface Question {
   topicId: string
   year?: number
   difficulty: 'easy' | 'medium' | 'hard'
-  source?: 'enem' | 'fuvest' | 'unicamp' | 'usp' | 'puc' | 'ita' | 'ime' | 'ufmg' | 'ufba' | 'other'
+  source?: 'enem' | 'fuvest' | 'unicamp' | 'usp' | 'puc' | 'ita' | 'ime' | 'ufmg' | 'ufba' | 'encceja' | 'other'
   sourceYear?: number // Ano da prova específica
+  examType?: ExamType // ENEM ou Encceja
+  educationLevel?: EducationLevel // Fundamental ou Médio (para Encceja)
 }
 
 export interface SimuladoSession {

@@ -56,6 +56,8 @@ const defaultLevel: UserLevel = {
 
 const defaultProgress: UserProgress = {
   userId: '',
+  examType: 'enem',
+  educationLevel: 'medio',
   streak: 0,
   lastStudyDate: null,
   totalStudyMinutes: 0,

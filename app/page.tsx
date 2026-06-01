@@ -20,6 +20,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     const p = storage.getProgress()
+    
+    // Redirecionar para seleção de modalidade se não foi selecionada
+    if (!p.examType) {
+      window.location.href = '/modalidade'
+      return
+    }
+    
     setProgress(p)
     setCycles(storage.getCycles())
     setFlashcards(storage.getFlashcards())
@@ -67,27 +74,32 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto fade-in">
+    <div className="p-3 md:p-6 max-w-6xl mx-auto fade-in">
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-6 md:mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white">Bem-vindo de volta!</h1>
-          <p className="text-slate-400 mt-1">Vamos continuar sua jornada rumo ao ENEM.</p>
+          <p className="text-slate-400 mt-1">
+            {progress?.examType === 'enem' 
+              ? 'Vamos continuar sua jornada rumo ao ENEM.'
+              : `Vamos continuar sua jornada rumo ao Encceja - Ensino ${progress?.educationLevel === 'fundamental' ? 'Fundamental' : 'Médio'}.`}
+          </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3 mt-4 md:mt-0">
           {/* Nível e XP */}
-          <div className="flex items-center gap-3 bg-violet-500/10 border border-violet-500/20 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-3">
             <div className="text-right">
-              <p className="text-violet-400 font-bold text-lg leading-none">Nível {progress?.level.currentLevel ?? 1}</p>
+              <p className="text-violet-400 font-bold text-sm md:text-lg leading-none">Nível {progress?.level.currentLevel ?? 1}</p>
               <p className="text-slate-500 text-xs">{progress?.level.totalXP ?? 0} XP</p>
             </div>
           </div>
           {/* Streak */}
-          <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-xl px-4 py-3">
-            <Flame size={20} className="text-orange-400" />
+          <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-3">
+            <Flame size={16} className="text-orange-400 md:hidden" />
+            <Flame size={20} className="text-orange-400 hidden md:block" />
             <div className="text-right">
-              <p className="text-orange-400 font-bold text-lg leading-none">{progress?.streak ?? 0}</p>
-              <p className="text-slate-500 text-xs">dias seguidos</p>
+              <p className="text-orange-400 font-bold text-sm md:text-lg leading-none">{progress?.streak ?? 0}</p>
+              <p className="text-slate-500 text-xs">dias</p>
             </div>
           </div>
         </div>
@@ -199,7 +211,7 @@ export default function Dashboard() {
       )}
 
       {/* Módulos rápidos */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-3 mb-6 md:mb-8">
         {QUICK_LINKS.map(({ href, icon: Icon, label, desc, color }) => (
           <Link
             key={href}
@@ -216,8 +228,8 @@ export default function Dashboard() {
       </div>
 
       {/* Progresso por área */}
-      <h2 className="text-lg font-semibold text-white mb-4">Progresso por Área</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <h2 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4">Progresso por Área</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-6">
         {areaStats.map(({ area, label, pct, accuracy, color }) => (
           <div key={area} className="bg-slate-900 border border-slate-800 rounded-xl p-5">
             <div className="flex justify-between items-center mb-3">
@@ -239,7 +251,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats globais */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4">
         {[
           { label: 'Flashcards criados', value: flashcards.length },
           { label: 'Sessões completas', value: progress?.completedSessions ?? 0 },

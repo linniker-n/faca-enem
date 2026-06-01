@@ -1,6 +1,8 @@
 import type { Question } from '../types'
+import { ENCCEJA_QUESTIONS } from './encceja-questions'
 
 export const QUESTIONS: Question[] = [
+  ...ENCCEJA_QUESTIONS,
   // ========== MATEMÁTICA ==========
   {
     id: 'q1',
@@ -621,10 +623,20 @@ export function getQuestionsByYear(year: number): Question[] {
   return QUESTIONS.filter((q) => q.sourceYear === year)
 }
 
-export function getRandomQuestions(count: number, filterSubjects?: string[], filterSource?: string): Question[] {
+export function getQuestionsByExamType(examType: string): Question[] {
+  return QUESTIONS.filter((q) => q.examType === examType || !q.examType)
+}
+
+export function getQuestionsByEducationLevel(level: string): Question[] {
+  return QUESTIONS.filter((q) => q.educationLevel === level || !q.educationLevel)
+}
+
+export function getRandomQuestions(count: number, filterSubjects?: string[], filterSource?: string, filterExamType?: string, filterLevel?: string): Question[] {
   let pool = QUESTIONS
   if (filterSubjects) pool = pool.filter((q) => filterSubjects.includes(q.subjectId))
   if (filterSource) pool = pool.filter((q) => q.source === filterSource)
+  if (filterExamType) pool = pool.filter((q) => q.examType === filterExamType || !q.examType)
+  if (filterLevel) pool = pool.filter((q) => q.educationLevel === filterLevel || !q.educationLevel)
   const shuffled = [...pool].sort(() => Math.random() - 0.5)
   return shuffled.slice(0, Math.min(count, pool.length))
 }
