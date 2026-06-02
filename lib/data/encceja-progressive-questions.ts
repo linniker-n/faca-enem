@@ -1,5 +1,6 @@
 import type { ProgressiveQuestion } from '../types-encceja'
 import { ENCCEJA_PROGRESSIVE_QUESTIONS_EXTENDED } from './encceja-progressive-questions-extended'
+import { ENCCEJA_PROGRESSIVE_QUESTIONS_MEGA } from './encceja-progressive-questions-mega'
 
 /**
  * Questões progressivas do Encceja estruturadas por nível de dificuldade
@@ -346,8 +347,9 @@ const ENCCEJA_PROGRESSIVE_QUESTIONS_BASE: ProgressiveQuestion[] = [
   },
 ]
 
-// Combina questões base com questões estendidas
+// Combina questões base com questões estendidas e mega
 export const ENCCEJA_PROGRESSIVE_QUESTIONS: ProgressiveQuestion[] = [
   ...ENCCEJA_PROGRESSIVE_QUESTIONS_BASE,
   ...ENCCEJA_PROGRESSIVE_QUESTIONS_EXTENDED,
+  ...ENCCEJA_PROGRESSIVE_QUESTIONS_MEGA,
 ]
