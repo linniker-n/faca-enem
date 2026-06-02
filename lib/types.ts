@@ -93,6 +93,7 @@ export interface UserProgress {
   userId: string // Identificador único do usuário
   examType: ExamType // ENEM ou Encceja
   educationLevel?: EducationLevel // Fundamental ou Médio (para Encceja)
+  schoolYear?: '1ano' | '2ano' | '3ano' // Ano escolar para Encceja
   streak: number
   lastStudyDate: string | null
   totalStudyMinutes: number

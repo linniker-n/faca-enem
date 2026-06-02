@@ -9,7 +9,7 @@ import type { ExamType, EducationLevel } from '@/lib/types'
 export default function ModalidadePage() {
   const router = useRouter()
   const [selectedExam, setSelectedExam] = useState<ExamType | null>(null)
-  const [selectedLevel, setSelectedLevel] = useState<EducationLevel | null>(null)
+  const [selectedYear, setSelectedYear] = useState<'1ano' | '2ano' | '3ano' | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -25,18 +25,19 @@ export default function ModalidadePage() {
 
     setLoading(true)
     
-    // Se selecionou Encceja, precisa escolher o nível
-    if (selectedExam === 'encceja' && !selectedLevel) {
+    // Se selecionou Encceja, precisa escolher o ano
+    if (selectedExam === 'encceja' && !selectedYear) {
       setLoading(false)
       return
     }
 
     // Salvar a escolha
     const progress = storage.getProgress()
-    const updatedProgress = {
+    const updatedProgress: typeof progress = {
       ...progress,
       examType: selectedExam,
-      educationLevel: selectedLevel || 'medio',
+      educationLevel: 'medio' as const, // Encceja é sempre médio agora
+      schoolYear: selectedYear || undefined,
       updatedAt: new Date().toISOString(),
     }
     
@@ -66,7 +67,6 @@ export default function ModalidadePage() {
           <button
             onClick={() => {
               setSelectedExam('enem')
-              setSelectedLevel('medio')
             }}
             className={`relative overflow-hidden rounded-2xl p-6 md:p-8 transition-all duration-300 border-2 group ${
               selectedExam === 'enem'
@@ -126,32 +126,44 @@ export default function ModalidadePage() {
           </button>
         </div>
 
-        {/* Seleção de Nível (Encceja) */}
+        {/* Seleção de Ano (Encceja) */}
         {selectedExam === 'encceja' && (
           <div className="mb-8 animate-in fade-in slide-in-from-top-2 duration-300">
-            <h3 className="text-white font-semibold mb-4">Qual é seu nível?</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h3 className="text-white font-semibold mb-4">Em qual ano você está?</h3>
+            <p className="text-slate-400 text-sm mb-4">Isso nos ajuda a personalizar o conteúdo para seu nível atual</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <button
-                onClick={() => setSelectedLevel('fundamental')}
+                onClick={() => setSelectedYear('1ano')}
                 className={`rounded-xl p-4 transition-all border-2 ${
-                  selectedLevel === 'fundamental'
+                  selectedYear === '1ano'
                     ? 'border-blue-500 bg-blue-500/10'
                     : 'border-slate-700 bg-slate-900/50 hover:border-blue-500/50'
                 }`}
               >
-                <p className="font-semibold text-white">Ensino Fundamental</p>
-                <p className="text-xs text-slate-400 mt-1">9º ano</p>
+                <p className="font-semibold text-white text-lg">1º Ano</p>
+                <p className="text-xs text-slate-400 mt-1">Fundamentos</p>
               </button>
               <button
-                onClick={() => setSelectedLevel('medio')}
+                onClick={() => setSelectedYear('2ano')}
                 className={`rounded-xl p-4 transition-all border-2 ${
-                  selectedLevel === 'medio'
+                  selectedYear === '2ano'
+                    ? 'border-purple-500 bg-purple-500/10'
+                    : 'border-slate-700 bg-slate-900/50 hover:border-purple-500/50'
+                }`}
+              >
+                <p className="font-semibold text-white text-lg">2º Ano</p>
+                <p className="text-xs text-slate-400 mt-1">Intermediário</p>
+              </button>
+              <button
+                onClick={() => setSelectedYear('3ano')}
+                className={`rounded-xl p-4 transition-all border-2 ${
+                  selectedYear === '3ano'
                     ? 'border-orange-500 bg-orange-500/10'
                     : 'border-slate-700 bg-slate-900/50 hover:border-orange-500/50'
                 }`}
               >
-                <p className="font-semibold text-white">Ensino Médio</p>
-                <p className="text-xs text-slate-400 mt-1">3º ano</p>
+                <p className="font-semibold text-white text-lg">3º Ano</p>
+                <p className="text-xs text-slate-400 mt-1">Avançado</p>
               </button>
             </div>
           </div>
@@ -168,7 +180,7 @@ export default function ModalidadePage() {
                 </>
               ) : (
                 <>
-                  Você vai estudar para o <strong>Encceja</strong> - Ensino {selectedLevel === 'fundamental' ? 'Fundamental' : 'Médio'}
+                  Você vai estudar para o <strong>Encceja</strong> - {selectedYear === '1ano' ? '1º Ano (Fundamentos)' : selectedYear === '2ano' ? '2º Ano (Intermediário)' : '3º Ano (Avançado)'}
                 </>
               )}
             </p>
@@ -178,9 +190,9 @@ export default function ModalidadePage() {
         {/* Botão de Confirmação */}
         <button
           onClick={handleConfirm}
-          disabled={!selectedExam || (selectedExam === 'encceja' && !selectedLevel) || loading}
+          disabled={!selectedExam || (selectedExam === 'encceja' && !selectedYear) || loading}
           className={`w-full py-3 md:py-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
-            !selectedExam || (selectedExam === 'encceja' && !selectedLevel) || loading
+            !selectedExam || (selectedExam === 'encceja' && !selectedYear) || loading
               ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
               : 'bg-gradient-to-r from-violet-500 to-violet-600 text-white hover:from-violet-600 hover:to-violet-700 active:scale-95'
           }`}
