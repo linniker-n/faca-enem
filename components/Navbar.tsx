@@ -27,7 +27,7 @@ export function Navbar() {
   const pathname = usePathname()
 
   return (
-    <aside className="flex flex-col w-16 md:w-20 lg:w-60 h-auto md:h-screen bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 shrink-0 order-2 md:order-1">
+    <aside className="flex flex-col w-16 md:w-60 h-auto md:h-screen bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 shrink-0">
       {/* Logo */}
       <div className="flex items-center justify-center md:justify-start gap-3 px-3 md:px-5 py-3 md:py-5 border-b border-slate-800 md:border-b">
         <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center shrink-0">
