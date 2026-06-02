@@ -1,11 +1,13 @@
 import type { ProgressiveQuestion } from '../types-encceja'
+import { ENCCEJA_PROGRESSIVE_QUESTIONS_EXTENDED } from './encceja-progressive-questions-extended'
 
 /**
  * Questões progressivas do Encceja estruturadas por nível de dificuldade
  * Cada tópico tem questões básicas, intermediárias e avançadas
+ * Total: 30+ questões iniciais + 20+ questões estendidas = 50+ questões
  */
 
-export const ENCCEJA_PROGRESSIVE_QUESTIONS: ProgressiveQuestion[] = [
+const ENCCEJA_PROGRESSIVE_QUESTIONS_BASE: ProgressiveQuestion[] = [
   // ========== MATEMÁTICA - OPERAÇÕES BÁSICAS ==========
   {
     id: 'enc-prog-mat-op-001',
@@ -342,4 +344,10 @@ export const ENCCEJA_PROGRESSIVE_QUESTIONS: ProgressiveQuestion[] = [
     sourceYear: 2023,
     keywords: ['Ditadura Militar', 'repressão', 'direitos civis'],
   },
+]
+
+// Combina questões base com questões estendidas
+export const ENCCEJA_PROGRESSIVE_QUESTIONS: ProgressiveQuestion[] = [
+  ...ENCCEJA_PROGRESSIVE_QUESTIONS_BASE,
+  ...ENCCEJA_PROGRESSIVE_QUESTIONS_EXTENDED,
 ]
